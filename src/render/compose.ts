@@ -1,0 +1,242 @@
+/** THE composition renderer — one code path for preview and export (DECISIONS D-005). */
+import type { Composition, Rect, SlotEdit, TextConfig } from '../types'
+import { getFilter } from '../data/filters'
+import { getTemplate } from '../data/templates'
+import { getFrame } from '../data/frames'
+import { getSticker } from '../data/stickers'
+import { coverCrop } from '../lib/images'
+import { applyOverlays, buildFilterString, ctxFilterSupported, drawWithPixelFilter } from './filterRender'
+import {
+  drawBackground,
+  drawDecor,
+  drawSlotShadow,
+  drawSlotStroke,
+  roundRectPath,
+  type FrameGeometry,
+} from './frameRender'
+
+export interface RenderImage {
+  source: CanvasImageSource
+  width: number
+  height: number
+}
+
+export const AUTO_TEXT_COLOR = 'auto'
+
+export function emptyComposition(templateId: string, photoIds: Array<string | null> = []): Composition {
+  const template = getTemplate(templateId)
+  return {
+    templateId,
+    frameId: 'classic-white',
+    slots: template.slots.map((_, i) => emptySlot(photoIds[i] ?? null)),
+    text: { caption: '', showDate: true, font: 'script', color: AUTO_TEXT_COLOR, align: 'center', size: 0.032 },
+    stickers: [],
+  }
+}
+
+export function emptySlot(photoId: string | null): SlotEdit {
+  return { photoId, filterId: null, intensity: 1, crop: { zoom: 1, x: 0, y: 0 }, flip: false }
+}
+
+function fontString(kind: TextConfig['font'], px: number): string {
+  switch (kind) {
+    case 'script':
+      return `600 ${px}px Caveat, cursive`
+    case 'serif':
+      return `600 ${px}px Fraunces, Georgia, serif`
+    case 'mono':
+      return `500 ${px}px ui-monospace, Menlo, Consolas, monospace`
+    default:
+      return `600 ${px}px -apple-system, "Segoe UI", Roboto, sans-serif`
+  }
+}
+
+function formatDate(d = new Date()): string {
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+/** Compute the frame-relative geometry (pure; unit-tested). */
+export function computeGeometry(templateId: string, frameId: string, W: number, H: number): FrameGeometry & { slotRects: Rect[] } {
+  const template = getTemplate(templateId)
+  const frame = getFrame(frameId)
+  const content: Rect = {
+    x: frame.padding.l * W,
+    y: frame.padding.t * H,
+    w: W - (frame.padding.l + frame.padding.r) * W,
+    h: H - (frame.padding.t + frame.padding.b) * H,
+  }
+  const footer: Rect | null = template.footer
+    ? {
+        x: content.x,
+        y: content.y + content.h * (1 - template.footer.h),
+        w: content.w,
+        h: content.h * template.footer.h,
+      }
+    : null
+  const slotRects: Rect[] = template.slots.map((s) => ({
+    x: content.x + s.x * content.w,
+    y: content.y + s.y * content.h,
+    w: s.w * content.w,
+    h: s.h * content.h,
+  }))
+  return { W, H, content, footer, slotRects }
+}
+
+/**
+ * Render a composition onto a target canvas at the given pixel width.
+ * Uses the same passes at preview and export sizes (ARCHITECHTURE §6.2).
+ */
+export function renderComposition(
+  target: HTMLCanvasElement,
+  comp: Composition,
+  images: Record<string, RenderImage | undefined>,
+  targetWidth: number
+): void {
+  const ctx = target.getContext('2d')
+  if (!ctx) return
+  const template = getTemplate(comp.templateId)
+  const frame = getFrame(comp.frameId)
+  const scale = targetWidth / template.canvas.w
+  const W = Math.round(targetWidth)
+  const H = Math.round(template.canvas.h * scale)
+  target.width = W
+  target.height = H
+
+  const geo = computeGeometry(comp.templateId, comp.frameId, W, H)
+
+  // 1. background + texture
+  drawBackground(ctx, W, H, frame, comp.frameColor)
+
+  // 2. slots
+  const useCtxFilter = ctxFilterSupported()
+  geo.slotRects.forEach((rect, i) => {
+    const slot = comp.slots[i] ?? emptySlot(null)
+    const radius = (frame.slotRadius ?? 0) * Math.min(rect.w, rect.h)
+
+    if (frame.slotShadow) drawSlotShadow(ctx, rect, radius, W)
+
+    ctx.save()
+    roundRectPath(ctx, rect.x, rect.y, rect.w, rect.h, radius)
+    ctx.clip()
+
+    const img = slot.photoId ? images[slot.photoId] : undefined
+    if (img) {
+      const aspect = rect.w / rect.h
+      const crop = coverCrop(img.width, img.height, aspect, slot.crop.zoom, slot.crop.x, slot.crop.y)
+      const filter = getFilter(slot.filterId)
+      ctx.save()
+      if (slot.flip) {
+        ctx.translate(rect.x + rect.w, rect.y)
+        ctx.scale(-1, 1)
+        ctx.translate(-rect.x, -rect.y)
+      }
+      if (filter) {
+        if (useCtxFilter) {
+          ctx.filter = buildFilterString(filter.params, slot.intensity, rect.w / 600)
+          ctx.imageSmoothingQuality = 'high'
+          ctx.drawImage(img.source, crop.sx, crop.sy, crop.sw, crop.sh, rect.x, rect.y, rect.w, rect.h)
+          ctx.filter = 'none'
+        } else {
+          drawWithPixelFilter(
+            ctx, img.source, img.width, img.height,
+            crop.sx, crop.sy, crop.sw, crop.sh,
+            rect.x, rect.y, rect.w, rect.h,
+            filter.params, slot.intensity, rect.w / 600
+          )
+        }
+        applyOverlays(ctx, rect, filter.overlays, slot.intensity, `${comp.templateId}:${i}:${slot.filterId}`)
+      } else {
+        ctx.imageSmoothingQuality = 'high'
+        ctx.drawImage(img.source, crop.sx, crop.sy, crop.sw, crop.sh, rect.x, rect.y, rect.w, rect.h)
+      }
+      ctx.restore()
+    } else {
+      // empty slot: quiet neutral fill (export keeps it clean; preview overlays hints in DOM)
+      ctx.fillStyle = 'rgba(43,33,24,0.05)'
+      ctx.fillRect(rect.x, rect.y, rect.w, rect.h)
+    }
+    ctx.restore()
+
+    if (frame.slotStroke) {
+      drawSlotStroke(ctx, rect, radius, frame.slotStroke.color, frame.slotStroke.width, W)
+    }
+  })
+
+  // 3. frame decor (sprockets, tape, stitches, scatter, footer bars…)
+  drawDecor(ctx, geo, frame)
+
+  // 4. caption / date in footer band
+  if (geo.footer) {
+    const textColor = comp.text.color === AUTO_TEXT_COLOR ? frame.footerStyle?.color ?? '#2B2118' : comp.text.color
+    drawFooterText(ctx, geo.footer, comp.text, textColor)
+  }
+
+  // 5. stickers on top
+  for (const p of comp.stickers) {
+    const def = getSticker(p.stickerId)
+    if (!def) continue
+    const size = p.scale * W
+    ctx.save()
+    ctx.translate(p.x * W, p.y * H)
+    ctx.rotate((p.rotation * Math.PI) / 180)
+    ctx.scale(size / 100, size / 100)
+    ctx.translate(-50, -50)
+    ctx.fillStyle = p.color
+    ctx.fill(new Path2D(def.path))
+    ctx.restore()
+  }
+}
+
+function drawFooterText(ctx: CanvasRenderingContext2D, footer: Rect, text: TextConfig, color: string): void {
+  const caption = text.caption.trim()
+  if (!caption && !text.showDate) return
+
+  const padX = footer.w * 0.04
+  const maxWidth = footer.w - padX * 2
+  const x0 = footer.x + padX
+  const alignX = text.align === 'left' ? x0 : text.align === 'right' ? footer.x + footer.w - padX : footer.x + footer.w / 2
+  ctx.save()
+  ctx.fillStyle = color
+  ctx.textBaseline = 'alphabetic'
+  ctx.textAlign = text.align === 'center' ? 'center' : text.align
+
+  const fitSize = (kind: TextConfig['font'], startPx: number, str: string): number => {
+    let px = startPx
+    ctx.font = fontString(kind, px)
+    while (ctx.measureText(str).width > maxWidth && px > 8) {
+      px *= 0.94
+      ctx.font = fontString(kind, px)
+    }
+    return px
+  }
+
+  const dateStr = text.showDate ? formatDate() : ''
+
+  if (caption && dateStr) {
+    const capPx = fitSize(text.font, text.size * footer.w, caption)
+    // caption in upper part of the band
+    const capY = footer.y + footer.h * 0.62
+    ctx.font = fontString(text.font, capPx)
+    ctx.fillText(caption, alignX, capY)
+    const datePx = Math.max(8, footer.h * 0.2)
+    ctx.font = fontString('mono', datePx)
+    ctx.fillText(dateStr, alignX, Math.min(footer.y + footer.h * 0.88, capY + datePx * 1.6))
+  } else if (caption) {
+    const capPx = fitSize(text.font, text.size * footer.w, caption)
+    ctx.font = fontString(text.font, capPx)
+    ctx.fillText(caption, alignX, footer.y + footer.h * 0.68)
+  } else if (dateStr) {
+    const px = Math.max(9, footer.h * 0.26)
+    ctx.font = fontString('mono', px)
+    ctx.fillText(dateStr, alignX, footer.y + footer.h * 0.66)
+  }
+  ctx.restore()
+}
+
+/** Render at export scale to an offscreen canvas → PNG blob. */
+export async function renderExportCanvas(comp: Composition, images: Record<string, RenderImage | undefined>, scale: 2 | 3): Promise<HTMLCanvasElement> {
+  const template = getTemplate(comp.templateId)
+  const canvas = document.createElement('canvas')
+  renderComposition(canvas, comp, images, template.canvas.w * scale)
+  return canvas
+}
