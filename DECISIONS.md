@@ -247,3 +247,25 @@ without creating a scroll container, restoring sticky. Verified at 853×900 scro
 toolbar pinned at header bottom (y=56), Export visible, Undo hit-test clean.
 **Consequences:** Sticky descendants work everywhere; true-desktop layout unaffected (studio fits
 viewport there; side panel scrolls internally).
+
+## D-027 · 2026-10-25 · Studio layout rebuilt as three contained bands (root-cause fix for covered controls)
+**Context:** Owner: "nothing changed even after hard refresh… refactor the frontend layout pleaseee."
+Screenshot analysis finally identified the real failure: the tool panel painted over the tab pills
+(only their top arcs visible), the strip canvas was hidden underneath, and the toolbar was clipped —
+the old studio-root grid/sticky/flex arrangement had multiple interacting containment mechanisms
+(grid-row placement, sticky-in-flex, side-panel internal scroll, tabs as a horizontal scroll
+container) that could collapse onto each other in environments we could not reproduce (owner's
+browser/zoom), despite passing audits at standard widths.
+**Decision:** Replace the studio layout entirely with a rigid three-band structure that carries its
+own containment at every level: (1) `.studio-top` — toolbar + tab pills in ONE opaque sticky band
+directly under the header at all widths; (2) `.studio-body` — a two-column grid (canvas pane |
+380px tool panel ≥900px, stacked below); (3) every pane self-contained: canvas pane owns a definite
+`clamp()` height + `overflow:hidden` (StripCanvas measures it — no parent-chain height dependency),
+panel scrolls internally on desktop and flows naturally on mobile, tabs `flex-wrap` instead of a
+horizontal scroll container (the old `overflow-x:auto` computed `overflow-y:auto` and clipped the
+pills' bottoms — the exact "covered pills" artifact). All legacy classes (.studio-root/.studio-side)
+deleted so no stale cascade remains.
+**Verified in-browser (seeded 3-photo strip):** at 375/853/1093/1280/1440, unscrolled and scrolled
+to bottom — Undo/Redo/Reset/Export and every tab pill in-viewport and elementFromPoint-hittable;
+canvas|panel side-by-side ≥900 with zero overlap, stacked <900; sticky band pinned at header bottom
+while scrolled; no horizontal overflow; strip canvas never collapses; tab switching swaps panels.

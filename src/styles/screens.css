@@ -87,45 +87,41 @@
   }
 }
 
-/* ---------- studio ---------- */
-
-.studio-root {
+/* ---------- studio ----------
+ * Rigid three-band structure (D-027): toolbar + tabs in one sticky top band,
+ * then a body grid of canvas pane | tool panel. Every pane gets hard
+ * containment (min-width:0, overflow:hidden|auto) so nothing can ever paint
+ * over a sibling at any width or zoom. Tabs wrap instead of scrolling —
+ * the old overflow-x:auto row computed overflow-y:auto and clipped the pills.
+ */
+.studio {
   display: flex;
   flex-direction: column;
   gap: var(--s4);
-  min-height: 0;
+  min-width: 0;
 }
-.studio-canvas-area {
-  flex: 1;
-  min-height: 320px;
-  max-height: 64dvh;
+.studio-top {
+  position: sticky;
+  top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+  z-index: 5;
+  background: var(--bg);
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s2) 0;
 }
 .studio-toolbar {
   display: flex;
   align-items: center;
   gap: var(--s2);
   flex-wrap: wrap;
-}
-/* keep Undo/Redo/Export reachable while the tool panel scrolls (mobile layout) */
-@media (max-width: 899px) {
-  .studio-toolbar {
-    position: sticky;
-    top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
-    z-index: 5;
-    background: var(--bg);
-    padding: var(--s2) 0;
-  }
+  min-height: 44px;
 }
 .studio-tabs {
   display: flex;
   gap: var(--s2);
-  overflow-x: auto;
-  padding-bottom: var(--s1);
-  scrollbar-width: none;
+  flex-wrap: wrap;
 }
-.studio-tabs::-webkit-scrollbar { display: none; }
 .studio-tab {
   display: inline-flex;
   align-items: center;
@@ -147,40 +143,41 @@
   color: var(--bg);
   border-color: var(--ink);
 }
+.studio-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s4);
+  align-items: start;
+  min-width: 0;
+}
+/* StripCanvas measures its box, so the pane always carries a definite height
+   of its own — never derived from a parent chain that could collapse. */
+.studio-canvas-area {
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  height: clamp(300px, 52dvh, 560px);
+}
 .studio-panel {
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   padding: var(--s4);
   box-shadow: var(--shadow-1);
 }
-
 @media (min-width: 900px) {
-  .studio-root {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 400px;
-    grid-template-rows: auto minmax(0, 1fr);
-    gap: var(--s5);
-    align-items: start;
+  .studio-body {
+    grid-template-columns: minmax(0, 1fr) 380px;
   }
-  /* definite height: the canvas measures its container, so auto/indefinite
-     heights here would collapse the fitted strip to nothing */
   .studio-canvas-area {
-    grid-row: 2;
-    height: calc(100dvh - 230px);
-    min-height: 420px;
-    max-height: none;
+    height: clamp(420px, calc(100dvh - 330px), 760px);
   }
-  .studio-side {
-    grid-row: 2;
-    grid-column: 2;
+  .studio-panel {
     max-height: calc(100dvh - 220px);
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: var(--s3);
   }
-  .studio-toolbar { grid-row: 1; grid-column: 1 / -1; }
 }
 
 /* ---------- gallery ---------- */

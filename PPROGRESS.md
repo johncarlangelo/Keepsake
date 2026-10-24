@@ -20,9 +20,13 @@ real-device testing (Tier C).
   README with deployment instructions.
 
 ## In progress
-- None. (CI is the next and final code change.)
+- None. (Studio layout refactored D-027; awaiting owner's next check on their desktop.)
 
 ## Blockers & known limitations
+- **Owner's desktop "covered buttons" report** — root-caused and structurally fixed via the D-027
+  Studio rebuild (three contained bands; tabs wrap instead of scroll-clipping; canvas pane owns its
+  height with `overflow:hidden`). Verified at 375/853/1093/1280/1440, scrolled + unscrolled, but
+  the owner's exact environment remains the final arbiter.
 - **Real-device testing (Tier C) not performed** — iOS Safari, Android Chrome, iPad, and Windows
   webcams remain UNVERIFIED. Desktop-emulation smoke passed (see below).
 - Camera behaviors that only manifest on devices (permission prompts, facingMode switching,

@@ -149,37 +149,39 @@ export function StudioScreen() {
   }
 
   return (
-    <section className="studio-root anim-enter" aria-label="Strip studio">
-      <div className="studio-toolbar">
-        <Button variant="ghost" size="sm" icon="undo" onClick={() => editor.undo()} disabled={editor.past.length === 0} aria-label="Undo (Ctrl+Z)">
-          <span className="btn-label">Undo</span>
-        </Button>
-        <Button variant="ghost" size="sm" icon="redo" onClick={() => editor.redo()} disabled={editor.future.length === 0} aria-label="Redo (Ctrl+Shift+Z)">
-          <span className="btn-label">Redo</span>
-        </Button>
-        <Button variant="ghost" size="sm" icon="reset" onClick={() => setConfirmReset(true)} aria-label="Reset edits">
-          <span className="btn-label">Reset</span>
-        </Button>
-        <span className="tiny muted" style={{ marginLeft: 4 }}>
-          {template.name} · {frame.name}
-        </span>
-        <span style={{ flex: 1 }} />
-        <Button icon="download" onClick={() => setShowExport(true)}>
-          Export
-        </Button>
-      </div>
+    <section className="studio anim-enter" aria-label="Strip studio">
+      <div className="studio-top">
+        <div className="studio-toolbar">
+          <Button variant="ghost" size="sm" icon="undo" onClick={() => editor.undo()} disabled={editor.past.length === 0} aria-label="Undo (Ctrl+Z)">
+            <span className="btn-label">Undo</span>
+          </Button>
+          <Button variant="ghost" size="sm" icon="redo" onClick={() => editor.redo()} disabled={editor.future.length === 0} aria-label="Redo (Ctrl+Shift+Z)">
+            <span className="btn-label">Redo</span>
+          </Button>
+          <Button variant="ghost" size="sm" icon="reset" onClick={() => setConfirmReset(true)} aria-label="Reset edits">
+            <span className="btn-label">Reset</span>
+          </Button>
+          <span className="tiny muted" style={{ marginLeft: 4 }}>
+            {template.name} · {frame.name}
+          </span>
+          <span style={{ flex: 1 }} />
+          <Button icon="download" onClick={() => setShowExport(true)}>
+            Export
+          </Button>
+        </div>
 
-      <div className="studio-canvas-area" key={`${comp.templateId}:${comp.frameId}`}>
-        <StripCanvas comp={comp} images={images} interactive onSlotTap={onSlotTap} />
-      </div>
-
-      <div className="studio-side">
         <div className="studio-tabs" role="tablist" aria-label="Edit tools">
           {tabs.map((t) => (
             <button key={t.id} role="tab" aria-selected={toolTab === t.id} className="studio-tab" onClick={() => editor.setToolTab(t.id)}>
               <Icon name={t.icon} size={16} /> {t.label}
             </button>
           ))}
+        </div>
+      </div>
+
+      <div className="studio-body">
+        <div className="studio-canvas-area" key={`${comp.templateId}:${comp.frameId}`}>
+          <StripCanvas comp={comp} images={images} interactive onSlotTap={onSlotTap} />
         </div>
 
         <div className="studio-panel" role="tabpanel">
