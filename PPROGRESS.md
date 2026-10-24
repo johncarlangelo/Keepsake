@@ -3,8 +3,8 @@
 **Last updated:** 2026-10-24 (post-implementation, pre-CI)
 
 ## Current phase
-Implementation complete (Phases 2–14 done). Remaining: final CI configuration (Phase 15), then
-hosting decision with the project owner (explicitly gated on owner confirmation).
+All phases complete (1–15), CI green on GitHub. Remaining: owner-gated hosting decision and
+real-device testing (Tier C).
 
 ## Completed
 - Phase 1: nine docs written & reconciled; skills installed project-local; git initialized and
@@ -54,13 +54,17 @@ hosting decision with the project owner (explicitly gated on owner confirmation)
 
 **Tier C — actual devices: UNVERIFIED (see VERIFY.md C1–C6).**
 
+**CI (GitHub Actions, real runs):** `.github/workflows/ci.yml` (created per D-012) — run
+40105098575 ✓ success (27 s, Node 20), run 40105184558 ✓ success (27 s, Node 24). All four gates
+green on ubuntu-latest.
+
 ## Important files changed (latest first)
 - `README.md`, `PPROGRESS.md`, `TASKS.md`, `DECISIONS.md` (this update)
 - `src/**` (all application code), `tests/**` (8 suites), `src/assets/fonts/**` (OFL fonts)
 - Nine root documentation files, `.agents/skills/**`
 
 ## Exact next recommended action
-Run the final CI phase: create `.github/workflows/ci.yml` (the absent-`ci.yml` discrepancy is
-recorded as D-012) running `npm ci && npm run typecheck && npm run lint && npm test && npm run
-build`. After that, ask the project owner for the hosting decision (Vercel vs GitHub Pages) —
-deployment is explicitly owner-gated.
+All code phases are complete and CI is green. Next: the project owner tests the app
+(`npm run dev` locally) and gives the go-ahead for hosting — Vercel or GitHub Pages, both
+documented in `README.md`. Deployment is explicitly owner-gated; real-device testing (VERIFY C1–C6)
+is the other open follow-up.

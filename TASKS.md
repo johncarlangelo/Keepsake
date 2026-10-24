@@ -60,8 +60,10 @@ Statuses: `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`. Acceptance criteria re
 - [x] **T14.3** README deployment instructions (Vercel / GitHub Pages).
 - [x] **T14.4** Full Tier A suite green: 54/54 tests; build 78 kB gz JS.
 
-## Phase 15 — Final CI configuration — IN_PROGRESS (last code change)
-- [ ] **T15.1** Create `.github/workflows/ci.yml` per D-012 (only after all above DONE — conditions met).
+## Phase 15 — Final CI configuration — DONE
+- [x] **T15.1** `.github/workflows/ci.yml` created per D-012 (checkout@v4, setup-node@v4/Node 24,
+      npm cache, then the four real gates: typecheck → lint → test → build). Verified green on
+      GitHub Actions: runs 40105098575 and 40105184558, both ✓ 27 s.
 
 ## Open follow-ups (not blockers)
 - Tier C device testing (VERIFY C1–C6) when hardware available — required before claiming any
