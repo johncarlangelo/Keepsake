@@ -92,6 +92,12 @@ Statuses: `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`. Acceptance criteria re
 - [x] **T18.3** Manual/Continuous capture toggle in the live view; continuous auto-fires each
       remaining shot (ref-held timer, cancelled on end/retake/unmount); setting persisted.
 
+## Phase 19 — GitHub Pages deployment — DONE (2026-10-25, D-032; owner-approved)
+- [x] **T19.1** Pages enabled via REST API (`build_type: workflow`) using gh CLI — no manual
+      GitHub-UI configuration required.
+- [x] **T19.2** `.github/workflows/deploy.yml` added (build + upload-artifact + deploy-pages);
+      site live at https://johncarlangelo.github.io/Keepsake/.
+
 ## Open follow-ups (not blockers)
 - Tier C device testing (VERIFY C1–C6) when hardware available — required before claiming any
   platform as verified.

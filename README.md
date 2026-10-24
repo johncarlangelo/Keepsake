@@ -59,16 +59,17 @@ on any static host without server rewrites.
 2. Framework preset: **Vite** (Build `npm run build`, Output `dist/`). No env vars needed.
 3. Deploy. HTTPS is automatic (required for camera access).
 
-### GitHub Pages (repository subpath)
-1. Build and publish from the `dist/` folder, e.g. with a workflow using
-   `actions/deploy-pages@v4` (artifact upload of `dist/`), or the classic
-   `gh-pages` branch: `npm run build && npx gh-pages -d dist`.
-2. Enable Pages in repo Settings (source: GitHub Actions or `gh-pages` branch).
+### GitHub Pages (repository subpath) — **ACTIVE**
+1. Deployed via `.github/workflows/deploy.yml`: on every push to `main` the app is built and
+   published with `actions/upload-pages-artifact@v3` + `actions/deploy-pages@v4`.
+2. Pages source is **GitHub Actions** (enabled once via the Pages API, `build_type: workflow`).
 3. The app is served under `/Keepsake/` — relative asset URLs and `#/` routing handle the
    subpath with no configuration.
 
-> Deployment/hosting of this project is gated on the owner's explicit go-ahead per the project
-> charter — nothing is deployed by the repository itself.
+**Live at: https://johncarlangelo.github.io/Keepsake/**
+
+> Deployment was gated on the owner's explicit go-ahead per the project charter — the owner
+> approved GitHub Pages on 2026-10-25 (see `DECISIONS.md` D-032).
 
 ## Repository layout
 

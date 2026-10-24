@@ -364,3 +364,21 @@ Continue → explainer; X opens "End this session?" from the live view; toggle f
 and persists. Gates: typecheck/lint/54 tests/build green.
 **Consequences:** capture.addShot order unchanged; continuous respects the countdown setting per
 shot (set countdown 0 for back-to-back instant shots); retakes always end after one shot.
+
+## D-032 · 2026-10-25 · Hosting: GitHub Pages via Actions workflow (owner-approved)
+**Context:** Owner: "ready to deploy in github pages. can you do it via gh cli or do i have to
+configure it via github itself?" — this is the charter's owner-gated hosting decision being
+exercised. The classic alternative (pushing `dist/` to a `gh-pages` branch) pollutes history and
+needs a second remote branch; Vercel remains documented in README as an option but was not chosen.
+**Decision:** Official Actions-based Pages deployment, fully provisioned via gh CLI/API with no
+manual GitHub-UI steps: (1) Pages enabled through the REST API with `build_type: workflow`
+(`POST /repos/…/pages`) — the API equivalent of Settings → Pages → Source: GitHub Actions;
+(2) new `.github/workflows/deploy.yml` (ci.yml untouched per AGENTS.md) — on push to main:
+npm ci → build → upload-pages-artifact(dist) → deploy-pages, with a `pages` concurrency group
+and the `github-pages` environment for the URL output. `base: './'` (D-009) + hash router (D-008)
+make the `/Keepsake/` subpath work with zero config. Live at
+https://johncarlangelo.github.io/Keepsake/.
+**Alternatives:** `gh-pages` branch flow (history churn, manual source setting); Vercel (owner
+picked Pages); modifying ci.yml to deploy (forbidden split of concerns — CI gates, deploy ships).
+**Consequences:** every push to main ships if CI-shaped checks in deploy are green (deploy builds
+independently; ci.yml remains the gate); HTTPS enforced by GitHub (camera access requires it).

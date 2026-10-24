@@ -20,8 +20,9 @@ real-device testing (Tier C).
   README with deployment instructions.
 
 ## In progress
-- None. Booth flow rework complete (D-031, Phase 18): start-flow layout sheet, dead-X fix,
-  continuous-capture toggle — verified in-browser; gates green (54/54 tests).
+- None. **Deployed to GitHub Pages** (D-032, Phase 19, owner-approved): every push to main ships
+  via deploy.yml; live at https://johncarlangelo.github.io/Keepsake/. Tier C device testing on
+  the live URL remains the open follow-up (VERIFY C1–C6).
 
 ## Blockers & known limitations
 - **Owner's desktop "covered buttons" report** — root-caused and structurally fixed via the D-027
