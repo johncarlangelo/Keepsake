@@ -235,3 +235,15 @@ are enter-only (no exit wait) so a stalled frame can never block navigation; Mot
 for toasts/overlays where a stall is cosmetic and self-heals.
 **Verified in-browser:** empty slot = transparent bg + dashed border + 44px circle; toolbar
 position sticky; #/gallery renders after reload; studio mounts after every navigation.
+
+## D-026 · 2026-10-25 · Sticky toolbar broken by body overflow-x:hidden (zoomed desktops)
+**Context:** Owner still could not see Undo/Redo/Export on "desktop". Reproduction showed true
+desktop widths (≥900) render fine; Windows scaling/browser zoom shrinks effective width below 900
+into the column layout, where the toolbar was made sticky — but `body { overflow-x: hidden }`
+creates a scroll container that disables position:sticky for descendants, so the toolbar scrolled
+away instead of pinning under the header.
+**Decision:** `overflow-x: clip` (with hidden as legacy fallback) — prevents sideways overflow
+without creating a scroll container, restoring sticky. Verified at 853×900 scrolled 600px:
+toolbar pinned at header bottom (y=56), Export visible, Undo hit-test clean.
+**Consequences:** Sticky descendants work everywhere; true-desktop layout unaffected (studio fits
+viewport there; side panel scrolls internally).

@@ -50,7 +50,11 @@ body {
   background-color: var(--bg);
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  /* clip (not hidden): overflow-x:hidden on body creates a scroll container that
+     breaks position:sticky descendants (the studio toolbar). clip prevents
+     sideways overflow without a scroll container; hidden stays as old-browser fallback. */
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* subtle paper grain on the app background only (never over user photos) */
