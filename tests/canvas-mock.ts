@@ -93,8 +93,11 @@ export function installCanvasMock(): void {
   const proto = (window as unknown as { HTMLCanvasElement?: { prototype: { getContext?: unknown } } }).HTMLCanvasElement?.prototype
   if (!proto) return
   const cache = new WeakMap<object, Ctx>()
-  const original = proto.getContext as unknown as (() => Ctx | null) | undefined
-  ;(proto as unknown as { getContext: () => Ctx | null }).getContext = function (this: HTMLCanvasElement, type: string): Ctx | null {
+  const original = proto.getContext as unknown as ((type: string) => Ctx | null) | undefined
+  ;(proto as unknown as { getContext: (type: string, opts?: unknown) => Ctx | null }).getContext = function (
+    this: HTMLCanvasElement,
+    type: string
+  ): Ctx | null {
     if (type === '2d') {
       let ctx = cache.get(this)
       if (!ctx) {
@@ -103,7 +106,7 @@ export function installCanvasMock(): void {
       }
       return ctx
     }
-    return original ? (original as () => Ctx | null)() : null
+    return original ? original(type) : null
   }
 
   if (typeof globalThis.Path2D === 'undefined') {
