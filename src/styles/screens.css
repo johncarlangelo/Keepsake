@@ -179,6 +179,29 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
   gap: var(--s3);
+  min-width: 0;
+}
+.gallery-section-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin: 0 0 var(--s3);
+}
+
+/* finished strips: the product — wider tiles, whole strip visible */
+.gallery-grid--strips {
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+}
+.gallery-tile.gallery-tile--strip {
+  aspect-ratio: auto;
+  height: 210px;
+}
+.gallery-tile.gallery-tile--strip img {
+  object-fit: contain;
+  padding: 8px;
+}
+@media (min-width: 600px) {
+  .gallery-tile.gallery-tile--strip { height: 250px; }
 }
 .gallery-tile {
   position: relative;

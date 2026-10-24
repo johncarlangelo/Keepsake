@@ -181,3 +181,16 @@ coverage, canvas overflow past cards.
 - Native checkbox/range accents unbranded; `kbd` unstyled → tokenized.
 - Mobile Studio canvas raised to 64dvh; slot hit-areas carry aria labels with no phantom text.
 **Result:** final sweep reports zero issues across all view/views; gates green (54/54).
+
+## D-022 · 2026-10-24 · Gallery IA: finished strips headline, photos secondary
+**Context:** Owner: individual captures in the Gallery were unintended but welcome — the Gallery's
+original purpose is the finished strip (the product).
+**Decision:** Two sections: "Finished strips" first (wider ~148px min tiles, fixed height,
+object-fit: contain so the whole strip reads) then "Photos" (square cover-fit thumbs as before).
+Selection/delete/clear and Create-strip behavior unchanged (creation uses captures). Redundant
+STRIP corner tag removed — the section says it. Empty strips section carries a pointer to
+Studio → Export → Save strip to Gallery.
+**Alternatives:** separate Screens/Strips destination (rejected: more navigation for one concern);
+removing captures (explicitly rejected by owner).
+**Consequences:** none storage-wise (same records); tile CSS uses higher-specificity selectors so
+base tile rules can't override the strip variant.

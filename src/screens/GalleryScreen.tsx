@@ -31,6 +31,8 @@ export function GalleryScreen() {
   }, [refresh])
 
   const detail = entries.find((e) => e.id === detailId) ?? null
+  const strips = entries.filter((e) => e.kind === 'strip')
+  const captures = entries.filter((e) => e.kind === 'capture')
 
   const createStrip = () => {
     const ids = selected.filter((id) => entries.find((e) => e.id === id)?.kind === 'capture')
@@ -87,18 +89,54 @@ export function GalleryScreen() {
           </Button>
         </div>
       ) : (
-        <div className="gallery-grid stagger">
-          {entries.map((e) => (
-            <GalleryTile
-              key={e.id}
-              entry={e}
-              selectMode={selectMode}
-              selected={selected.includes(e.id)}
-              onOpen={() => setDetailId(e.id)}
-              onToggle={() => toggleSelect(e.id)}
-            />
-          ))}
-        </div>
+        <>
+          <section aria-label="Finished strips" style={{ marginBottom: 'var(--s6)' }}>
+            <h2 className="gallery-section-title">
+              Finished strips{strips.length > 0 ? <span className="muted tiny"> · {strips.length}</span> : null}
+            </h2>
+            {strips.length === 0 ? (
+              <p className="muted tiny">
+                No finished strips yet — compose one in the Studio, then “Save strip to Gallery” from Export.
+              </p>
+            ) : (
+              <div className="gallery-grid gallery-grid--strips stagger">
+                {strips.map((e) => (
+                  <GalleryTile
+                    key={e.id}
+                    entry={e}
+                    variant="strip"
+                    selectMode={selectMode}
+                    selected={selected.includes(e.id)}
+                    onOpen={() => setDetailId(e.id)}
+                    onToggle={() => toggleSelect(e.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+          <section aria-label="Photos">
+            <h2 className="gallery-section-title">
+              Photos{captures.length > 0 ? <span className="muted tiny"> · {captures.length}</span> : null}
+            </h2>
+            {captures.length === 0 ? (
+              <p className="muted tiny">Photos you take in the booth appear here automatically.</p>
+            ) : (
+              <div className="gallery-grid stagger">
+                {captures.map((e) => (
+                  <GalleryTile
+                    key={e.id}
+                    entry={e}
+                    variant="photo"
+                    selectMode={selectMode}
+                    selected={selected.includes(e.id)}
+                    onOpen={() => setDetailId(e.id)}
+                    onToggle={() => toggleSelect(e.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
       )}
 
       {selectMode && entries.length > 0 ? (
@@ -187,12 +225,14 @@ function StorageMeterLine({ estimate, persisted }: { estimate: { usage: number; 
 
 function GalleryTile({
   entry,
+  variant,
   selectMode,
   selected,
   onOpen,
   onToggle,
 }: {
   entry: GalleryEntry
+  variant: 'strip' | 'photo'
   selectMode: boolean
   selected: boolean
   onOpen: () => void
@@ -200,12 +240,12 @@ function GalleryTile({
 }) {
   return (
     <button
-      className="gallery-tile"
+      className={variant === 'strip' ? 'gallery-tile gallery-tile--strip' : 'gallery-tile'}
       aria-pressed={selectMode ? selected : undefined}
       aria-label={
         selectMode
-          ? `${selected ? 'Deselect' : 'Select'} ${entry.kind === 'strip' ? 'saved strip' : 'photo'} from ${new Date(entry.createdAt).toLocaleDateString()}`
-          : `Open ${entry.kind === 'strip' ? 'saved strip' : 'photo'} from ${new Date(entry.createdAt).toLocaleDateString()}`
+          ? `${selected ? 'Deselect' : 'Select'} ${variant === 'strip' ? 'finished strip' : 'photo'} from ${new Date(entry.createdAt).toLocaleDateString()}`
+          : `Open ${variant === 'strip' ? 'finished strip' : 'photo'} from ${new Date(entry.createdAt).toLocaleDateString()}`
       }
       onClick={selectMode ? onToggle : onOpen}
     >
@@ -216,7 +256,6 @@ function GalleryTile({
       ) : (
         <img src={entry.thumbUrl} alt="" loading="lazy" />
       )}
-      {entry.kind === 'strip' ? <span className="kind-tag">STRIP</span> : null}
     </button>
   )
 }
