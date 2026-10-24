@@ -10,6 +10,10 @@ import { Icon } from './icons'
 
 const MAX_RENDER_W = 1400
 
+/**
+ * Canvas fitted to its container by measurement (CSS aspect-ratio chains collapse
+ * in indefinite-height grids). `maxCanvasHeight` caps auto-height containers.
+ */
 export function StripCanvas({
   comp,
   images,
@@ -17,6 +21,7 @@ export function StripCanvas({
   interactive = false,
   onSlotTap,
   renderOpts,
+  maxCanvasHeight,
 }: {
   comp: Composition
   images: Record<string, RenderImage | undefined>
@@ -24,11 +29,12 @@ export function StripCanvas({
   interactive?: boolean
   onSlotTap?: (index: number | null) => void
   renderOpts?: RenderOptions
+  maxCanvasHeight?: number
 }) {
   const template = getTemplate(comp.templateId)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const [cssW, setCssW] = useState(0)
+  const boxRef = useRef<HTMLDivElement>(null)
+  const [box, setBox] = useState({ w: 0, h: 0 })
   const [fontsReady, setFontsReady] = useState(false)
   const { selectedSlot, selectedSticker, selectSlot, selectSticker, updateSticker, beginInteraction } = useEditor()
 
@@ -46,28 +52,37 @@ export function StripCanvas({
   }, [])
 
   useEffect(() => {
-    const el = wrapRef.current
+    const el = boxRef.current
     if (!el) return
     const ro = new ResizeObserver((entries) => {
-      const w = Math.round(entries[0]?.contentRect.width ?? 0)
-      // ignore sub-pixel chatter so intrinsic-size canvases converge instead of looping
-      setCssW((prev) => (Math.abs(prev - w) <= 1 ? prev : w))
+      const e = entries[0]
+      const w = Math.round(e?.contentRect.width ?? 0)
+      const h = Math.round(e?.contentRect.height ?? 0)
+      // ignore sub-pixel chatter so measurement converges
+      setBox((prev) => (Math.abs(prev.w - w) <= 1 && Math.abs(prev.h - h) <= 1 ? prev : { w, h }))
     })
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
 
+  const ratio = template.canvas.w / template.canvas.h
+  const fit = useMemo(() => {
+    const hAvail = box.h > 40 ? box.h : maxCanvasHeight ?? 100000
+    const w = Math.min(box.w, hAvail * ratio)
+    return { w: Math.round(w), h: Math.round(w / ratio) }
+  }, [box.w, box.h, ratio, maxCanvasHeight])
+
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas || cssW < 40) return
+    if (!canvas || fit.w < 40) return
     const dpr = Math.min(2, window.devicePixelRatio || 1)
-    renderComposition(canvas, comp, images, Math.min(MAX_RENDER_W, Math.round(cssW * dpr)), renderOpts)
-  }, [comp, images, cssW, fontsReady, renderOpts])
+    renderComposition(canvas, comp, images, Math.min(MAX_RENDER_W, Math.round(fit.w * dpr)), renderOpts)
+  }, [comp, images, fit.w, fontsReady, renderOpts])
 
   const geo = useMemo(() => {
-    if (cssW < 40) return null
+    if (fit.w < 40) return null
     return computeGeometry(comp.templateId, comp.frameId, 1000, Math.round((1000 * template.canvas.h) / template.canvas.w))
-  }, [comp.templateId, comp.frameId, cssW, template.canvas.h, template.canvas.w])
+  }, [comp.templateId, comp.frameId, fit.w, template.canvas.h, template.canvas.w])
 
   const overlay = interactive ? (
     <StripOverlay
@@ -86,19 +101,14 @@ export function StripCanvas({
   ) : null
 
   return (
-    <div className={className} style={{ display: 'flex', minHeight: 0 }}>
-      <div
-        ref={wrapRef}
-        style={{
-          aspectRatio: `${template.canvas.w} / ${template.canvas.h}`,
-          height: '100%',
-          maxWidth: '100%',
-          margin: '0 auto',
-          position: 'relative',
-        }}
-      >
-        <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', borderRadius: 'inherit' }} aria-label="Photo strip preview" role="img" />
-        {overlay}
+    <div className={className} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 0, width: '100%', height: '100%' }}>
+      <div ref={boxRef} style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        {fit.w >= 40 ? (
+          <div style={{ position: 'relative', width: fit.w, height: fit.h }}>
+            <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', borderRadius: 'inherit' }} aria-label="Photo strip preview" role="img" />
+            {overlay}
+          </div>
+        ) : null}
       </div>
     </div>
   )
@@ -157,7 +167,9 @@ function StripOverlay({
         if (stickerUid) {
           const s = comp.stickers.find((x) => x.uid === stickerUid)
           const rect = target.getBoundingClientRect()
-          dragRef.current = s ? { uid: stickerUid, offX: s.x - (e.clientX - rect.left) / rect.width, offY: s.y - (e.clientY - rect.top) / rect.height } : null
+          dragRef.current = s
+            ? { uid: stickerUid, offX: s.x - (e.clientX - rect.left) / rect.width, offY: s.y - (e.clientY - rect.top) / rect.height }
+            : null
           onStickerSelect(stickerUid)
           beginInteraction()
           target.setPointerCapture(e.pointerId)

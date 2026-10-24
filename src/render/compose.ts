@@ -29,7 +29,7 @@ export function emptyComposition(templateId: string, photoIds: Array<string | nu
     templateId,
     frameId: 'classic-white',
     slots: template.slots.map((_, i) => emptySlot(photoIds[i] ?? null)),
-    text: { caption: '', showDate: true, font: 'script', color: AUTO_TEXT_COLOR, align: 'center', size: 0.032 },
+    text: { caption: '', showDate: true, font: 'script', color: AUTO_TEXT_COLOR, align: 'center', size: 0.05 },
     stickers: [],
   }
 }
@@ -41,13 +41,14 @@ export function emptySlot(photoId: string | null): SlotEdit {
 function fontString(kind: TextConfig['font'], px: number): string {
   switch (kind) {
     case 'script':
-      return `600 ${px}px Caveat, cursive`
+      // Caveat has a small x-height; nudge it up so script captions read at the same size
+      return `600 ${(px * 1.15).toFixed(1)}px Caveat, cursive`
     case 'serif':
-      return `600 ${px}px Fraunces, Georgia, serif`
+      return `600 ${px.toFixed(1)}px Fraunces, Georgia, serif`
     case 'mono':
-      return `500 ${px}px ui-monospace, Menlo, Consolas, monospace`
+      return `500 ${px.toFixed(1)}px ui-monospace, Menlo, Consolas, monospace`
     default:
-      return `600 ${px}px -apple-system, "Segoe UI", Roboto, sans-serif`
+      return `600 ${px.toFixed(1)}px -apple-system, "Segoe UI", Roboto, sans-serif`
   }
 }
 
@@ -207,42 +208,28 @@ function drawFooterText(ctx: CanvasRenderingContext2D, footer: Rect, text: TextC
 
   const padX = footer.w * 0.04
   const maxWidth = footer.w - padX * 2
-  const x0 = footer.x + padX
-  const alignX = text.align === 'left' ? x0 : text.align === 'right' ? footer.x + footer.w - padX : footer.x + footer.w / 2
+  const alignX = text.align === 'left' ? footer.x + padX : text.align === 'right' ? footer.x + footer.w - padX : footer.x + footer.w / 2
   ctx.save()
   ctx.fillStyle = color
-  ctx.textBaseline = 'alphabetic'
   ctx.textAlign = text.align === 'center' ? 'center' : text.align
-
-  const fitSize = (kind: TextConfig['font'], startPx: number, str: string): number => {
-    let px = startPx
-    ctx.font = fontString(kind, px)
-    while (ctx.measureText(str).width > maxWidth && px > 8) {
-      px *= 0.94
-      ctx.font = fontString(kind, px)
-    }
-    return px
-  }
+  ctx.textBaseline = 'middle'
 
   const dateStr = text.showDate ? formatDate() : ''
+  const datePx = Math.max(10, footer.h * 0.28)
 
-  if (caption && dateStr) {
-    const capPx = fitSize(text.font, text.size * footer.w, caption)
-    // caption in upper part of the band
-    const capY = footer.y + footer.h * 0.62
+  if (caption) {
+    // user size, clamped so a huge caption can't swallow the footer band, then shrink-to-fit
+    let capPx = Math.max(12, Math.min(text.size * footer.w, footer.h * 0.55))
     ctx.font = fontString(text.font, capPx)
-    ctx.fillText(caption, alignX, capY)
-    const datePx = Math.max(8, footer.h * 0.2)
+    while (ctx.measureText(caption).width > maxWidth && capPx > 10) {
+      capPx *= 0.94
+      ctx.font = fontString(text.font, capPx)
+    }
+    ctx.fillText(caption, alignX, footer.y + footer.h * (dateStr ? 0.32 : 0.55))
+  }
+  if (dateStr) {
     ctx.font = fontString('mono', datePx)
-    ctx.fillText(dateStr, alignX, Math.min(footer.y + footer.h * 0.88, capY + datePx * 1.6))
-  } else if (caption) {
-    const capPx = fitSize(text.font, text.size * footer.w, caption)
-    ctx.font = fontString(text.font, capPx)
-    ctx.fillText(caption, alignX, footer.y + footer.h * 0.68)
-  } else if (dateStr) {
-    const px = Math.max(9, footer.h * 0.26)
-    ctx.font = fontString('mono', px)
-    ctx.fillText(dateStr, alignX, footer.y + footer.h * 0.66)
+    ctx.fillText(dateStr, alignX, footer.y + footer.h * (caption ? 0.76 : 0.55))
   }
   ctx.restore()
 }

@@ -36,6 +36,12 @@
 
 .btn-sm { min-height: 36px; padding: var(--s1) var(--s4); font-size: 0.875rem; }
 
+/* icon buttons with optional text label: label appears on roomier screens */
+.btn .btn-label { display: none; }
+@media (min-width: 600px) {
+  .btn .btn-label { display: inline; }
+}
+
 .icon-btn {
   display: inline-flex;
   align-items: center;
@@ -187,6 +193,10 @@
 }
 .modal-card {
   pointer-events: auto;
+  /* relative + z above the scrim: a static card would paint UNDER its own
+     positioned dim layer, darkening the dialog itself */
+  position: relative;
+  z-index: calc(var(--z-sheet) + 1);
   width: min(440px, 100%);
   max-height: 86dvh;
   overflow-y: auto;

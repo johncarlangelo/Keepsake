@@ -7,7 +7,7 @@ import { useRenderImages, StripCanvas } from '../components/StripCanvas'
 import { TemplatePicker, FramePicker } from '../components/pickers'
 import { FilterPicker } from '../components/FilterPicker'
 import { StickerTray, TextPanel } from '../components/decorations'
-import { Button, Chip, ConfirmDialog, IconButton, Segmented, Sheet, Slider } from '../components/ui'
+import { Button, Chip, ConfirmDialog, Segmented, Sheet, Slider } from '../components/ui'
 import { Icon } from '../components/icons'
 import { getTemplate } from '../data/templates'
 import { getFrame } from '../data/frames'
@@ -151,9 +151,15 @@ export function StudioScreen() {
   return (
     <section className="studio-root anim-enter" aria-label="Strip studio">
       <div className="studio-toolbar">
-        <IconButton icon="undo" label="Undo (Ctrl+Z)" onClick={() => editor.undo()} disabled={editor.past.length === 0} />
-        <IconButton icon="redo" label="Redo (Ctrl+Shift+Z)" onClick={() => editor.redo()} disabled={editor.future.length === 0} />
-        <IconButton icon="reset" label="Reset edits" onClick={() => setConfirmReset(true)} />
+        <Button variant="ghost" size="sm" icon="undo" onClick={() => editor.undo()} disabled={editor.past.length === 0} aria-label="Undo (Ctrl+Z)">
+          <span className="btn-label">Undo</span>
+        </Button>
+        <Button variant="ghost" size="sm" icon="redo" onClick={() => editor.redo()} disabled={editor.future.length === 0} aria-label="Redo (Ctrl+Shift+Z)">
+          <span className="btn-label">Redo</span>
+        </Button>
+        <Button variant="ghost" size="sm" icon="reset" onClick={() => setConfirmReset(true)} aria-label="Reset edits">
+          <span className="btn-label">Reset</span>
+        </Button>
         <span className="tiny muted" style={{ marginLeft: 4 }}>
           {template.name} · {frame.name}
         </span>

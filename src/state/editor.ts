@@ -83,7 +83,7 @@ export const useEditor = create<EditorState>((set, get) => {
     applyToAll: false,
     interacting: false,
 
-    load: (comp) => set({ comp, past: [], future: [], selectedSlot: null, selectedSticker: null }),
+    load: (comp) => set({ comp, past: [], future: [], selectedSlot: null, selectedSticker: null, toolTab: 'filter' }),
     reset: () => {
       const { comp } = get()
       if (!comp) return

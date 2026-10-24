@@ -70,16 +70,8 @@
   width: 100%;
   animation: ks-enter var(--t-med) var(--ease-out) backwards;
 }
-/* the shared canvas keeps its intrinsic aspect: size by max edges, not 100% height */
-.layout-preview-canvas > div {
-  height: auto !important;
-  margin: 0 auto;
-}
+/* the shared canvas keeps its intrinsic aspect: capped height in auto-height containers */
 .layout-preview-canvas canvas {
-  width: auto;
-  height: auto;
-  max-height: min(340px, 44dvh);
-  max-width: 100%;
   border-radius: 8px;
   box-shadow: var(--shadow-1);
 }
@@ -158,10 +150,13 @@
     gap: var(--s5);
     align-items: start;
   }
+  /* definite height: the canvas measures its container, so auto/indefinite
+     heights here would collapse the fitted strip to nothing */
   .studio-canvas-area {
     grid-row: 2;
-    max-height: calc(100dvh - 220px);
+    height: calc(100dvh - 230px);
     min-height: 420px;
+    max-height: none;
   }
   .studio-side {
     grid-row: 2;

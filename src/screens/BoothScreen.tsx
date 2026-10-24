@@ -339,12 +339,13 @@ export function BoothScreen() {
           </div>
         </div>
         <div className="card layout-preview" aria-label={`Preview of ${template.name} layout`}>
-          <div key={templateId} className="anim-enter" style={{ display: 'flex', minHeight: 0 }}>
+          <div key={templateId} className="anim-enter">
             <StripCanvas
               comp={previewComp}
               images={{}}
               className="layout-preview-canvas"
               renderOpts={{ placeholder: 'sample', text: false }}
+              maxCanvasHeight={340}
             />
           </div>
           <p className="tiny muted" style={{ textAlign: 'center', marginTop: 10, marginBottom: 0 }}>

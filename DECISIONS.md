@@ -146,3 +146,21 @@ Booth hydrates from `settings.lastTemplateId` on mount; a live preview card (sha
 warm sample placeholder fills, no micro-text at that size — `RenderOptions`) shows the selected
 layout and cross-fades on change. Picker minis also use sample fills (`text: false`).
 **Consequences:** Pills give immediate visible feedback; "Start the Booth" uses the shown layout.
+
+## D-019 · 2026-10-24 · Modal self-darkening: static card painted under its own scrim
+**Context:** Owner report: the dialog dimmed the background *and itself*. `.modal-card` was a
+non-positioned element, so its sibling scrim (positioned, z-index 20) painted above the card in
+the same stacking context.
+**Decision:** `.modal-card` gets `position: relative; z-index: calc(var(--z-sheet) + 1)`.
+**Consequences:** Dialog content always sits above its dim layer; verified by hit-test in-browser.
+
+## D-020 · 2026-10-24 · Canvas fitting by measurement, not CSS aspect chains
+**Context:** Owner report: Studio canvas blank/clipped on desktop. CSS `aspect-ratio` +
+`height:100%` chains collapse inside indefinite-height grid rows (desktop Studio layout).
+**Decision:** `StripCanvas` measures its container (ResizeObserver, ±1px convergence guard) and
+computes the fitted pixel box in JS; auto-height contexts pass `maxCanvasHeight`. Desktop
+`.studio-canvas-area` gets a definite height.
+**Consequences:** Correct aspect-true rendering in every context (Studio grid, landing preview,
+export sheet); caption/date sizes raised with clamped fit (default 0.05, range 0.03–0.12; date
+0.28 of band; script font +15% x-height compensation). Studio also lands on the Filter tab now —
+layout was already chosen pre-capture (owner feedback).

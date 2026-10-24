@@ -174,11 +174,11 @@ export function TextPanel({ text, onChange }: { text: TextConfig; onChange: (pat
       <Slider
         label="Text size"
         value={text.size}
-        min={0.02}
-        max={0.06}
-        step={0.002}
+        min={0.03}
+        max={0.12}
+        step={0.005}
         onChange={(v) => onChange({ size: v })}
-        format={(v) => `${Math.round(v * 1000)}`}
+        format={(v) => String(Math.round(v * 1000))}
       />
     </div>
   )
