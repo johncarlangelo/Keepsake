@@ -222,6 +222,18 @@ kbd {
   from { opacity: 0; transform: translateY(8px) scale(0.97); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+@keyframes ks-exit {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(4px) scale(0.98); }
+}
+@keyframes ks-sheet-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ks-sheet-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(16px); }
+}
 @keyframes ks-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ks-develop {
   from { opacity: 0.4; filter: blur(6px) brightness(1.25); }
@@ -247,7 +259,7 @@ kbd {
 .anim-develop { animation: ks-develop 600ms var(--ease-out) backwards; }
 .anim-pop { animation: ks-pop 400ms cubic-bezier(0.165, 0.84, 0.44, 1) backwards; }
 
-.view-root { animation: ks-fade 160ms ease-out, ks-enter var(--t-med) var(--ease-out); }
+.view-root { min-height: 100%; }
 
 @media (prefers-reduced-motion: reduce) {
   *,

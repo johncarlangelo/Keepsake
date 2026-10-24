@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { FILTERS, FILTER_CATEGORIES, getFilter } from '../data/filters'
 import { buildFilterString, ctxFilterSupported, applyOverlays } from '../render/filterRender'
 import { coverCrop } from '../lib/images'
+import { Slider } from './ui'
 import type { RenderImage } from '../render/compose'
 import type { FilterPreset } from '../types'
 
@@ -124,23 +125,15 @@ export function FilterPicker({
         })}
       </div>
       {preset ? (
-        <label className="slider" aria-label="Filter intensity">
-          <span>
-            <span>Intensity</span>
-            <span>{Math.round(intensity * 100)}%</span>
-          </span>
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.05}
-            value={intensity}
-            aria-label="Filter intensity"
-            onChange={(e) => onIntensity(Number(e.target.value))}
-            onPointerUp={onIntensityCommit}
-            onKeyUp={onIntensityCommit}
-          />
-        </label>
+        <Slider
+          label="Intensity"
+          value={intensity}
+          min={0}
+          max={1}
+          step={0.05}
+          onChange={onIntensity}
+          onCommit={onIntensityCommit}
+        />
       ) : null}
     </div>
   )

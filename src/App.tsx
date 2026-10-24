@@ -1,5 +1,6 @@
-/** App shell: header, view routing, tab bar, toasts. */
+/** App shell: header, view routing (Motion transitions), tab bar, toasts. */
 import { useEffect } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useHashRoute, navigate } from './route'
 import { BoothScreen } from './screens/BoothScreen'
 import { StudioScreen } from './screens/StudioScreen'
@@ -18,10 +19,15 @@ const TABS: Array<{ view: View; label: string; icon: 'aperture' | 'wand' | 'gall
 export function App() {
   const view = useHashRoute()
   const refresh = useGallery((s) => s.refresh)
+  const reduceMotion = useReducedMotion()
 
   useEffect(() => {
     void refresh()
   }, [refresh])
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [view])
 
   return (
     <>
@@ -48,9 +54,18 @@ export function App() {
       </header>
 
       <main className="app-main" id="main">
-        <div className="view-root" key={view}>
-          {view === 'booth' ? <BoothScreen /> : view === 'studio' ? <StudioScreen /> : <GalleryScreen />}
-        </div>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={view}
+            className="view-root"
+            initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+          >
+            {view === 'booth' ? <BoothScreen /> : view === 'studio' ? <StudioScreen /> : <GalleryScreen />}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       <nav className="tabbar" aria-label="Primary">

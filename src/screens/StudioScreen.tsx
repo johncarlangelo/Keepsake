@@ -210,7 +210,11 @@ export function StudioScreen() {
               ) : null}
               <FilterPicker
                 selectedId={editor.applyToAll || selectedSlot === null ? comp.slots.find((s) => s.filterId)?.filterId ?? null : selectedSlotEdit?.filterId ?? null}
-                intensity={selectedSlotEdit?.intensity ?? 1}
+                intensity={
+                  editor.applyToAll || selectedSlot === null
+                    ? comp.slots.find((s) => s.filterId)?.intensity ?? 1
+                    : selectedSlotEdit?.intensity ?? 1
+                }
                 onSelect={(id) => {
                   if (editor.applyToAll || selectedSlot === null) editor.applyFilterToAll(id)
                   else editor.setSlotFilter(selectedSlot, id)

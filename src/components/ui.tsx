@@ -1,6 +1,9 @@
-/** Core UI kit: Button, IconButton, Chip, Slider, Sheet, Modal, Confirm, Toasts, Segmented. */
-import { useEffect, useRef, type ReactNode, type ChangeEvent } from 'react'
+/** Core UI kit: Button, IconButton, Chip, Radix-backed Slider/Sheet/Modal, Confirm, Toasts (Motion), Segmented. */
+import { type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import * as Dialog from '@radix-ui/react-dialog'
+import * as SliderPrimitive from '@radix-ui/react-slider'
+import { AnimatePresence, motion } from 'motion/react'
 import type { IconName } from './icons'
 import { Icon } from './icons'
 import { useToasts } from '../state/toast'
@@ -65,7 +68,7 @@ export function ChipRow({ children, label }: { children: ReactNode; label: strin
   )
 }
 
-/* ---------- slider ---------- */
+/* ---------- slider (Radix) ---------- */
 
 export function Slider({
   label,
@@ -92,17 +95,21 @@ export function Slider({
         <span>{label}</span>
         <span>{format ? format(value) : Math.round(value * 100) + '%'}</span>
       </label>
-      <input
-        type="range"
-        value={value}
+      <SliderPrimitive.Root
+        className="slider-root"
+        value={[value]}
         min={min}
         max={max}
         step={step}
         aria-label={label}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(Number(e.target.value))}
-        onPointerUp={onCommit}
-        onKeyUp={onCommit}
-      />
+        onValueChange={(v) => onChange(v[0] ?? min)}
+        onValueCommit={() => onCommit?.()}
+      >
+        <SliderPrimitive.Track className="slider-track">
+          <SliderPrimitive.Range className="slider-range" />
+        </SliderPrimitive.Track>
+        <SliderPrimitive.Thumb className="slider-thumb" />
+      </SliderPrimitive.Root>
     </div>
   )
 }
@@ -131,7 +138,7 @@ export function Segmented({
   )
 }
 
-/* ---------- sheet ---------- */
+/* ---------- sheet (Radix Dialog, docked style) ---------- */
 
 export function Sheet({
   open,
@@ -146,27 +153,35 @@ export function Sheet({
   children: ReactNode
   closeLabel?: string
 }) {
-  useEsc(open, onClose)
-  useLockBodyScroll(open)
-  if (!open) return null
-  // Portaled to body: fixed positioning must never depend on animated ancestors
-  return createPortal(
-    <>
-      <div className="sheet-scrim" onClick={onClose} aria-hidden="true" />
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={title}>
-        <div className="sheet-grabber" aria-hidden="true" />
-        <div className="sheet-head">
-          <h2>{title}</h2>
-          <IconButton icon="close" label={closeLabel} onClick={onClose} />
-        </div>
-        <div className="sheet-body">{children}</div>
-      </div>
-    </>,
-    document.body
+  return (
+    <Dialog.Root
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose()
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Overlay className="sheet-scrim" />
+        <Dialog.Content className="sheet" aria-describedby={undefined}>
+          <div className="sheet-grabber" aria-hidden="true" />
+          <div className="sheet-head">
+            <Dialog.Title asChild>
+              <h2>{title}</h2>
+            </Dialog.Title>
+            <Dialog.Close asChild>
+              <button className="icon-btn" aria-label={closeLabel}>
+                <Icon name="close" />
+              </button>
+            </Dialog.Close>
+          </div>
+          <div className="sheet-body">{children}</div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
 
-/* ---------- modal (focus-trapped) ---------- */
+/* ---------- modal (Radix Dialog, centered) ---------- */
 
 export function Modal({
   open,
@@ -179,52 +194,32 @@ export function Modal({
   onClose?: () => void
   children: ReactNode
 }) {
-  const ref = useRef<HTMLDivElement>(null)
-  useEsc(open, onClose)
-  useLockBodyScroll(open)
-  useEffect(() => {
-    if (!open) return
-    const node = ref.current
-    if (!node) return
-    const prevFocus = document.activeElement as HTMLElement | null
-    const focusables = () =>
-      Array.from(node.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter(
-        (el) => !el.hasAttribute('disabled')
-      )
-    focusables()[0]?.focus()
-    const trap = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return
-      const items = focusables()
-      if (items.length === 0) return
-      const first = items[0]!
-      const last = items[items.length - 1]!
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault()
-        last.focus()
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault()
-        first.focus()
-      }
-    }
-    node.addEventListener('keydown', trap)
-    return () => {
-      node.removeEventListener('keydown', trap)
-      prevFocus?.focus()
-    }
-  }, [open])
-  if (!open) return null
-  return createPortal(
-    <div className="modal-center">
-      <div className="sheet-scrim" onClick={onClose} aria-hidden="true" />
-      <div className="modal-card" role="dialog" aria-modal="true" aria-label={title} ref={ref}>
-        <div className="modal-head">
-          <h2>{title}</h2>
-          {onClose ? <IconButton icon="close" label="Close" onClick={onClose} /> : null}
-        </div>
-        {children}
-      </div>
-    </div>,
-    document.body
+  return (
+    <Dialog.Root
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose?.()
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Overlay className="sheet-scrim" />
+        <Dialog.Content className="modal-card" aria-describedby={undefined}>
+          <div className="modal-head">
+            <Dialog.Title asChild>
+              <h2>{title}</h2>
+            </Dialog.Title>
+            {onClose ? (
+              <Dialog.Close asChild>
+                <button className="icon-btn" aria-label="Close">
+                  <Icon name="close" />
+                </button>
+              </Dialog.Close>
+            ) : null}
+          </div>
+          {children}
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
 
@@ -264,60 +259,43 @@ export function ConfirmDialog({
   )
 }
 
-/* ---------- toasts ---------- */
+/* ---------- toasts (Motion enter/exit) ---------- */
 
 export function ToastRegion(): ReactNode {
   const { toasts, dismiss } = useToasts()
-  return (
+  return createPortal(
     <div className="toast-region" role="status" aria-live="polite">
-      {toasts.map((t) => (
-        <div key={t.id} className={`toast ${t.kind === 'error' ? 'error' : ''}`}>
-          <span>{t.message}</span>
-          {t.action ? (
-            <button
-              className="btn-link"
-              onClick={() => {
-                t.action?.run()
-                dismiss(t.id)
-              }}
-            >
-              {t.action.label}
-            </button>
-          ) : null}
-          {t.sticky ? (
-            <button className="btn-link" onClick={() => dismiss(t.id)}>
-              Dismiss
-            </button>
-          ) : null}
-        </div>
-      ))}
-    </div>
+      <AnimatePresence initial={false}>
+        {toasts.map((t) => (
+          <motion.div
+            key={t.id}
+            className={`toast ${t.kind === 'error' ? 'error' : ''}`}
+            initial={{ opacity: 0, y: 16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.96 }}
+            transition={{ duration: 0.22, ease: [0.215, 0.61, 0.355, 1] }}
+          >
+            <span>{t.message}</span>
+            {t.action ? (
+              <button
+                className="btn-link"
+                onClick={() => {
+                  t.action?.run()
+                  dismiss(t.id)
+                }}
+              >
+                {t.action.label}
+              </button>
+            ) : null}
+            {t.sticky ? (
+              <button className="btn-link" onClick={() => dismiss(t.id)}>
+                Dismiss
+              </button>
+            ) : null}
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>,
+    document.body
   )
-}
-
-/* ---------- helpers ---------- */
-
-function useEsc(active: boolean, handler?: () => void): void {
-  useEffect(() => {
-    if (!active || !handler) return
-    const fn = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handler()
-    }
-    window.addEventListener('keydown', fn)
-    return () => window.removeEventListener('keydown', fn)
-  }, [active, handler])
-}
-
-/** Freeze page scroll while any modal/sheet is open (counted: nested dialogs safe). */
-let lockCount = 0
-function useLockBodyScroll(active: boolean): void {
-  useEffect(() => {
-    if (!active) return
-    lockCount += 1
-    if (lockCount === 1) document.body.style.overflow = 'hidden'
-    return () => {
-      lockCount -= 1
-      if (lockCount === 0) document.body.style.overflow = ''
-    }
-  }, [active])
 }

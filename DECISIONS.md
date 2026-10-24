@@ -205,3 +205,19 @@ Modal/Sheet is open (counted, so nested confirm dialogs restore correctly).
 **Sweep result:** every dismissible surface now supports scrim-click + X + Esc: photo detail,
 camera explainer, all confirm dialogs, all sheets (export, photo picker, all-layouts, storage info).
 Verified in-browser: open → close by scrim click, X, and Esc; scroll locks and restores.
+
+## D-024 · 2026-10-25 · Component libraries: Radix primitives + Motion + Lucide
+**Context:** Owner asked for component libraries to lift UI polish (and approved new deps
+explicitly). Charter prefers minimal deps; AGENTS.md requires justification per dependency.
+**Decision (after web research):**
+- `@radix-ui/react-dialog` + `@radix-ui/react-slider` — headless, unstyled, best-in-class a11y
+  (focus trap, scroll lock, pointer-outside, keyboard) while keeping our token styling. Replaces
+  hand-rolled Modal/Sheet plumbing and raw range inputs.
+- `motion` (framer-motion's successor) — view transitions with exit animations, toast
+  enter/exit, hero entrance. Tree-shakes to ~17 KB gz core.
+- `lucide-react` — replaces the hand-drawn icon set with the industry-standard icon library
+  (per ui-ux-pro-max "use Lucide/SVG icons, never emoji"). Brand Logo stays custom.
+**Alternatives:** MUI/Chakra/NextUI (opinioned styling would fight the Analog Heartbreak system);
+react-spring (lighter but less DX); keeping hand-rolled (owner asked for libraries).
+**Consequences:** bundle grows (~+60–70 KB gz est., budget 250 KB); overlays gain Radix-maintained
+a11y behaviors; icons noticeably more professional; exit animations finally exist.

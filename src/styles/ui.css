@@ -122,22 +122,38 @@
   .picker-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
 }
 
-/* ---------- sliders ---------- */
+/* ---------- slider (Radix) ---------- */
 
 .slider { display: flex; flex-direction: column; gap: var(--s1); }
-.slider label { font-size: 0.875rem; color: var(--ink-soft); display: flex; justify-content: space-between; }
-.slider input[type='range'] {
-  width: 100%;
-  height: 28px;
-  margin: 0;
-  accent-color: var(--rose);
-  cursor: pointer;
+.slider label {
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+  display: flex;
+  justify-content: space-between;
 }
+.slider-root { position: relative; display: flex; align-items: center; height: 28px; touch-action: none; user-select: none; }
+.slider-track { position: relative; flex: 1; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.slider-range { position: absolute; height: 100%; background: var(--rose-deep); border-radius: 3px; }
+.slider-thumb {
+  position: relative;
+  z-index: 1;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--rose-deep);
+  box-shadow: var(--shadow-1);
+  cursor: grab;
+  transition: transform var(--t-fast) var(--ease-out);
+}
+.slider-thumb:hover { transform: scale(1.12); }
+.slider-thumb:active { cursor: grabbing; transform: scale(1.05); }
+.slider-thumb:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
-/* ---------- sheets & modals ---------- */
+/* ---------- sheets & modals (Radix Dialog) ---------- */
 /*
- * Sheets/modals render through portals at body level; these styles rely on
- * position:fixed actually meaning the viewport (see base.css note on fill modes).
+ * Behavior (focus trap, Esc, click-outside, scroll lock) comes from Radix;
+ * we own the look. Enter/exit run on data-state so Radix can wait out exits.
  */
 
 .sheet-scrim {
@@ -145,11 +161,9 @@
   inset: 0;
   z-index: var(--z-sheet);
   background: rgba(34, 26, 18, 0.45);
-  animation: ks-fade var(--t-med) ease-out backwards;
-  /* parent .modal-center is pointer-events:none; pointer-events inherits, so the
-     scrim must re-enable it or "click outside to close" silently dies */
-  pointer-events: auto;
 }
+.sheet-scrim[data-state='open'] { animation: ks-fade var(--t-med) ease-out; }
+.sheet-scrim[data-state='closed'] { animation: ks-fade 150ms ease-in reverse; }
 
 .sheet {
   position: fixed;
@@ -165,8 +179,9 @@
   box-shadow: var(--shadow-3);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   transform-origin: 50% 100%;
-  animation: ks-enter var(--t-med) var(--ease-out) backwards;
 }
+.sheet[data-state='open'] { animation: ks-sheet-in var(--t-med) var(--ease-out); }
+.sheet[data-state='closed'] { animation: ks-sheet-out 170ms var(--ease-out); }
 .sheet-grabber {
   width: 44px;
   height: 4px;
@@ -185,31 +200,23 @@
 .sheet-head h2 { font-size: 1.25rem; flex: 1; }
 .sheet-body { overflow-y: auto; padding: 0 var(--s5) var(--s5); -webkit-overflow-scrolling: touch; }
 
-.modal-center {
-  position: fixed;
-  z-index: var(--z-modal);
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: var(--s4);
-  pointer-events: none;
-}
 .modal-card {
-  pointer-events: auto;
-  /* relative + z above the scrim: a static card would paint UNDER its own
-     positioned dim layer, darkening the dialog itself */
-  position: relative;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  /* separate `translate` keeps centering while transform animations play */
+  translate: -50% -50%;
   z-index: calc(var(--z-sheet) + 1);
-  width: min(440px, 100%);
+  width: min(440px, calc(100vw - var(--s6)));
   max-height: 86dvh;
   overflow-y: auto;
   background: var(--surface);
   border-radius: var(--r-md);
   box-shadow: var(--shadow-3);
   padding: var(--s5);
-  transform-origin: 50% 50%;
-  animation: ks-enter var(--t-med) var(--ease-out) backwards;
 }
+.modal-card[data-state='open'] { animation: ks-enter var(--t-med) var(--ease-out); }
+.modal-card[data-state='closed'] { animation: ks-exit 150ms var(--ease-out); }
 .modal-card h2 { margin-bottom: var(--s3); }
 .modal-head {
   display: flex;
