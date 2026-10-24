@@ -41,8 +41,8 @@ All users share one expectation: **photos are kept automatically** and **nothing
 ## 4. User journeys
 
 ### J1 — First visit, capture to share (phone)
-1. Open hosted URL → landing screen with layout quick-picks and a friendly privacy note.
-2. Pick a strip layout (e.g., Classic 4) → tap **Start the Booth**.
+1. Open hosted URL → landing screen with a friendly privacy note.
+2. Tap **Start the Booth** → choose a strip layout (e.g., Classic 4) and session settings → allow the camera.
 3. Permission explainer modal → **Enable camera** → browser permission prompt → live preview (mirrored, front camera default on phones).
 4. Countdown 3-2-1 × 4 shots, shutter flash and optional sound between each. Each photo is saved to the in-app Gallery as it is taken.
 5. Review grid: retake any single slot, or **Compose in Studio**.

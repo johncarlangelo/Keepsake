@@ -4,15 +4,16 @@ import { CameraController } from '../lib/camera'
 import { newId, putPhoto, requestPersistence, storageEstimate } from '../lib/db'
 import { makeThumb, pooledUrl } from '../lib/images'
 import { sounds } from '../lib/sound'
-import { TEMPLATES, getTemplate } from '../data/templates'
+import { getTemplate } from '../data/templates'
 import { emptyComposition } from '../render/compose'
 import { useCapture } from '../state/capture'
 import { useEditor } from '../state/editor'
 import { useSettings } from '../state/settings'
 import { toast } from '../state/toast'
 import { navigate } from '../route'
-import { Button, Chip, ChipRow, ConfirmDialog, Card, Modal, Sheet } from '../components/ui'
+import { Button, Chip, ConfirmDialog, Card, Modal, Segmented, Sheet } from '../components/ui'
 import { Icon } from '../components/icons'
+import { AuroraBackdrop } from '../components/showcase'
 import { TemplatePicker } from '../components/pickers'
 import { StripCanvas } from '../components/StripCanvas'
 import { HeroStage, FeatureBento, HowItWorks } from '../components/booth-sections'
@@ -23,7 +24,7 @@ export function BoothScreen() {
   const { settings, update } = useSettings()
 
   const [showExplainer, setShowExplainer] = useState(false)
-  const [showTemplates, setShowTemplates] = useState(false)
+  const [showStart, setShowStart] = useState(false)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
   const [flash, setFlash] = useState(false)
@@ -37,6 +38,16 @@ export function BoothScreen() {
   const busyRef = useRef(false)
   const retakeRef = useRef<number | null>(null)
   retakeRef.current = retakeOf
+  /** pending auto-capture in continuous mode (cancelled on session end/unmount) */
+  const autoTimerRef = useRef<number | null>(null)
+  const cancelAuto = () => {
+    if (autoTimerRef.current !== null) {
+      window.clearTimeout(autoTimerRef.current)
+      autoTimerRef.current = null
+    }
+  }
+  /** latest runCountdownThenCapture, callable from timers without stale closures */
+  const runCaptureRef = useRef<() => void>(() => {})
 
   const template = getTemplate(templateId)
   const previewComp = useMemo(() => emptyComposition(templateId), [templateId])
@@ -57,7 +68,10 @@ export function BoothScreen() {
     }
   }, [])
 
-  useEffect(() => () => stopCamera(), [stopCamera])
+  useEffect(() => () => {
+    cancelAuto()
+    stopCamera()
+  }, [stopCamera])
 
   /* attach stream whenever we're live and the video element is fresh */
   useEffect(() => {
@@ -156,6 +170,15 @@ export function BoothScreen() {
         if (done) {
           stopCamera()
           setPhase('review')
+        } else if (useSettings.getState().settings.continuous) {
+          // continuous mode: roll straight into the next shot's countdown
+          cancelAuto()
+          autoTimerRef.current = window.setTimeout(() => {
+            autoTimerRef.current = null
+            if (useCapture.getState().phase !== 'live') return
+            if (!useSettings.getState().settings.continuous) return
+            runCaptureRef.current()
+          }, 900)
         }
       }
       setFlash(true)
@@ -196,6 +219,7 @@ export function BoothScreen() {
     }
     window.setTimeout(tick, 1000)
   }, [countdown, doCapture, settings.countdown])
+  runCaptureRef.current = runCountdownThenCapture
 
   /* keyboard: space to capture */
   useEffect(() => {
@@ -233,6 +257,7 @@ export function BoothScreen() {
   }
 
   const discardSession = () => {
+    cancelAuto()
     stopCamera()
     endSession()
     setRetakeOf(null)
@@ -242,102 +267,95 @@ export function BoothScreen() {
 
   if (phase === 'live') {
     return (
-      <LiveView
-        videoRef={videoRef}
-        camState={camState}
-        countdown={countdown}
-        flash={flash}
-        shotsTaken={retakeOf !== null ? undefined : shots.length}
-        templateName={template.name}
-        templateShots={template.shots}
-        onShutter={runCountdownThenCapture}
-        onSwitch={() => void startCamera(controllerRef.current?.activeFacing === 'user' ? 'environment' : 'user')}
-        canSwitch={canSwitch}
-        onStop={() => setConfirmDiscard(true)}
-        onRetry={() => void startCamera(controllerRef.current?.activeFacing ?? 'user')}
-      />
+      <>
+        <LiveView
+          videoRef={videoRef}
+          camState={camState}
+          countdown={countdown}
+          flash={flash}
+          shotsTaken={retakeOf !== null ? undefined : shots.length}
+          templateName={template.name}
+          templateShots={template.shots}
+          continuous={settings.continuous}
+          onToggleContinuous={(v) => update({ continuous: v })}
+          onShutter={runCountdownThenCapture}
+          onSwitch={() => void startCamera(controllerRef.current?.activeFacing === 'user' ? 'environment' : 'user')}
+          canSwitch={canSwitch}
+          onStop={() => setConfirmDiscard(true)}
+          onRetry={() => void startCamera(controllerRef.current?.activeFacing ?? 'user')}
+        />
+        {/* the dialog must live in every phase branch — the X button was dead
+            because this dialog previously rendered on the landing branch only */}
+        <ConfirmDialog
+          open={confirmDiscard}
+          title="End this session?"
+          message="Photos already taken stay safe in your Gallery — this only closes the booth session."
+          confirmLabel="End session"
+          onConfirm={discardSession}
+          onCancel={() => setConfirmDiscard(false)}
+        />
+      </>
     )
   }
 
   if (phase === 'review') {
     return (
-      <section aria-label="Review your photos" className="animate-enter">
-        <ReviewView
-          shots={shots}
-          template={template}
-          onRetake={(i) => {
-            setRetakeOf(i)
-            beginRetake(i)
-            void startCamera(controllerRef.current?.activeFacing ?? 'user')
-          }}
-          onCompose={composeInStudio}
-          onRetakeAll={() => {
-            endSession()
-            startSession(templateId)
-            void startCamera('user')
-          }}
-          onDiscard={() => setConfirmDiscard(true)}
+      <>
+        <section aria-label="Review your photos" className="animate-enter">
+          <ReviewView
+            shots={shots}
+            template={template}
+            onRetake={(i) => {
+              cancelAuto()
+              setRetakeOf(i)
+              beginRetake(i)
+              void startCamera(controllerRef.current?.activeFacing ?? 'user')
+            }}
+            onCompose={composeInStudio}
+            onRetakeAll={() => {
+              endSession()
+              startSession(templateId)
+              void startCamera('user')
+            }}
+            onDiscard={() => setConfirmDiscard(true)}
+          />
+        </section>
+        <ConfirmDialog
+          open={confirmDiscard}
+          title="End this session?"
+          message="Photos already taken stay safe in your Gallery — this only closes the booth session."
+          confirmLabel="End session"
+          onConfirm={discardSession}
+          onCancel={() => setConfirmDiscard(false)}
         />
-      </section>
+      </>
     )
   }
 
-  /* landing */
-  const quickTemplates = TEMPLATES.filter((t) =>
-    ['classic-4', 'fourcut-kr', 'hero-4', 'single-polaroid', 'classic-6', 'filmstrip-4'].includes(t.id)
-  )
+  /* landing — layout selection lives in the start flow, not here (D-031) */
   return (
     <section className="animate-enter" aria-label="Keepsake photobooth">
       <HeroStage
         templateLabel={`${template.name} · ${template.shots} ${template.shots === 1 ? 'shot' : 'shots'}`}
         storageNote={storageNote}
-        onStart={() => setShowExplainer(true)}
+        onStart={() => setShowStart(true)}
         onUseGallery={() => navigate('gallery')}
       />
 
       <FeatureBento previewComp={previewComp} templateLabel={template.name} />
       <HowItWorks />
 
-      <Card className="mt-10">
-        <div className="grid items-start gap-6 [grid-template-columns:minmax(0,1fr)] wide:grid-cols-[minmax(0,1fr)_280px] wide:gap-8">
-          <div className="min-w-0">
-            <h2 className="mb-1 text-xl">Pick a layout</h2>
-            <p className="muted mb-3 text-sm">Tap a layout to preview it — change it anytime in the Studio.</p>
-            <ChipRow label="Quick layouts">
-              {quickTemplates.map((t) => (
-                <Chip key={t.id} active={t.id === templateId} onClick={() => selectTemplate(t.id)}>
-                  {t.name} · {t.shots}
-                </Chip>
-              ))}
-              <Chip onClick={() => setShowTemplates(true)}>
-                <Icon name="plus" size={14} /> All {TEMPLATES.length} layouts
-              </Chip>
-            </ChipRow>
-            <p className="muted mt-5 text-sm">Session settings</p>
-            <div className="flex flex-wrap gap-2">
-              <Chip onClick={() => update({ countdown: settings.countdown === 0 ? 3 : settings.countdown === 3 ? 5 : 0 })}>
-                Countdown {settings.countdown === 0 ? 'off' : `${settings.countdown}s`}
-              </Chip>
-              <Chip onClick={() => update({ sound: !settings.sound })}>Sound {settings.sound ? 'on' : 'off'}</Chip>
-              <Chip onClick={() => update({ mirrorSave: !settings.mirrorSave })}>Mirror save {settings.mirrorSave ? 'on' : 'off'}</Chip>
-            </div>
-          </div>
-          <div
-            aria-label={`Preview of ${template.name} layout`}
-            className="flex w-full flex-col animate-enter wide:sticky wide:top-[calc(var(--header-h)+24px)]"
-          >
-            <div key={templateId} className="animate-enter [&>div>div>canvas]:rounded-lg [&>div>div>canvas]:shadow-1">
-              <StripCanvas
-                comp={previewComp}
-                images={{}}
-                renderOpts={{ placeholder: 'sample', text: false }}
-                maxCanvasHeight={340}
-              />
-            </div>
-            <p className="muted mt-2.5 text-center text-sm">
-              {template.name} · {template.shots} {template.shots === 1 ? 'shot' : 'shots'}
-            </p>
-          </div>
+      {/* closing CTA band */}
+      <Card className="relative mt-12 overflow-hidden py-10 text-center">
+        <AuroraBackdrop />
+        <div className="relative">
+          <p className="font-display text-2xl">Ready for your close-up?</p>
+          <p className="muted mx-auto mb-6 mt-2 max-w-[42ch] text-sm">
+            Pick a layout, grant the camera once, and your first strip is about two minutes away.
+          </p>
+          <Button className="sheen" icon="camera" onClick={() => setShowStart(true)}>
+            Start the Booth
+          </Button>
         </div>
       </Card>
 
@@ -357,29 +375,44 @@ export function BoothScreen() {
         </div>
       </Modal>
 
-      <Sheet
-        open={showTemplates}
-        title="All layouts"
-        onClose={() => setShowTemplates(false)}
-      >
-        <TemplatePicker
-          selectedId={templateId}
-          onSelect={(id) => {
-            selectTemplate(id)
-            setShowTemplates(false)
-          }}
-          images={{}}
-        />
+      {/* start flow: layout choice + session settings, then the camera explainer */}
+      <Sheet open={showStart} title="Choose your layout" onClose={() => setShowStart(false)}>
+        <div className="flex flex-col gap-5">
+          <div aria-label={`Preview of ${template.name} layout`} className="flex flex-col items-center">
+            <div key={templateId} className="animate-enter flex max-h-[240px] justify-center [&>div>div>canvas]:rounded-lg [&>div>div>canvas]:shadow-1">
+              <StripCanvas comp={previewComp} images={{}} renderOpts={{ placeholder: 'sample', text: false }} maxCanvasHeight={220} />
+            </div>
+            <p className="muted mt-2 text-sm">
+              {template.name} · {template.shots} {template.shots === 1 ? 'shot' : 'shots'}
+            </p>
+          </div>
+          <TemplatePicker selectedId={templateId} onSelect={selectTemplate} images={{}} />
+          <div>
+            <p className="muted mb-2 text-sm">Session settings</p>
+            <div className="flex flex-wrap gap-2">
+              <Chip onClick={() => update({ countdown: settings.countdown === 0 ? 3 : settings.countdown === 3 ? 5 : 0 })}>
+                Countdown {settings.countdown === 0 ? 'off' : `${settings.countdown}s`}
+              </Chip>
+              <Chip onClick={() => update({ sound: !settings.sound })}>Sound {settings.sound ? 'on' : 'off'}</Chip>
+              <Chip onClick={() => update({ mirrorSave: !settings.mirrorSave })}>Mirror save {settings.mirrorSave ? 'on' : 'off'}</Chip>
+              <Chip active={settings.continuous} onClick={() => update({ continuous: !settings.continuous })}>
+                Continuous {settings.continuous ? 'on' : 'off'}
+              </Chip>
+            </div>
+            <p className="muted mt-2 text-[0.8125rem]">Continuous fires every shot back-to-back — no shutter presses needed.</p>
+          </div>
+          <Button
+            className="sheen"
+            icon="camera"
+            onClick={() => {
+              setShowStart(false)
+              setShowExplainer(true)
+            }}
+          >
+            Continue · {template.shots} {template.shots === 1 ? 'shot' : 'shots'}
+          </Button>
+        </div>
       </Sheet>
-
-      <ConfirmDialog
-        open={confirmDiscard}
-        title="End this session?"
-        message="Photos already taken stay safe in your Gallery — this only closes the booth session."
-        confirmLabel="End session"
-        onConfirm={discardSession}
-        onCancel={() => setConfirmDiscard(false)}
-      />
     </section>
   )
 }
@@ -412,13 +445,15 @@ function LiveView(props: {
   shotsTaken?: number
   templateName: string
   templateShots: number
+  continuous: boolean
+  onToggleContinuous: (v: boolean) => void
   onShutter: () => void
   onSwitch: () => void
   canSwitch: boolean
   onStop: () => void
   onRetry: () => void
 }) {
-  const { videoRef, camState, countdown, flash, shotsTaken, templateName, templateShots, onShutter, onSwitch, canSwitch, onStop, onRetry } = props
+  const { videoRef, camState, countdown, flash, shotsTaken, templateName, templateShots, continuous, onToggleContinuous, onShutter, onSwitch, canSwitch, onStop, onRetry } = props
   const err = camErrorMessage(camState)
   return (
     <section aria-label="Live camera" className="animate-enter mx-auto max-w-2xl">
@@ -497,6 +532,19 @@ function LiveView(props: {
         )}
       </div>
 
+      {/* capture mode: manual shutter presses or continuous auto-fire (D-031) */}
+      <div className="flex justify-center pt-4">
+        <Segmented
+          label="Capture mode"
+          value={continuous ? 'continuous' : 'manual'}
+          onChange={(v) => onToggleContinuous(v === 'continuous')}
+          options={[
+            { value: 'manual', label: 'Manual' },
+            { value: 'continuous', label: 'Continuous' },
+          ]}
+        />
+      </div>
+
       <div className="grid place-items-center py-5">
         <button
           onClick={onShutter}
@@ -509,8 +557,12 @@ function LiveView(props: {
             <span aria-hidden="true" className="absolute -inset-1 animate-shutter-ring rounded-full border-[3px] border-rose" />
           ) : null}
         </button>
-        <p className="muted mt-2.5 text-sm">
-          or press <kbd>Space</kbd>
+        <p className="muted mt-2.5 text-sm" aria-live="polite">
+          {continuous ? 'Continuous — every shot fires automatically' : (
+            <>
+              or press <kbd>Space</kbd>
+            </>
+          )}
         </p>
       </div>
     </section>

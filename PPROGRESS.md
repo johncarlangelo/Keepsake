@@ -20,9 +20,8 @@ real-device testing (Tier C).
   README with deployment instructions.
 
 ## In progress
-- None. Expressive showcase redesign complete (D-030, TASKS Phase 17): aurora hero, spotlight
-  bento, marquee, film-stage studio, gallery styling — built on the existing stack with zero new
-  dependencies; gates green (54/54 tests); verified at 1280 and 375 widths.
+- None. Booth flow rework complete (D-031, Phase 18): start-flow layout sheet, dead-X fix,
+  continuous-capture toggle — verified in-browser; gates green (54/54 tests).
 
 ## Blockers & known limitations
 - **Owner's desktop "covered buttons" report** — root-caused and structurally fixed via the D-027

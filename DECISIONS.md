@@ -343,3 +343,24 @@ with v4, big dep for ~6 components); Tailwind UI (paid license); MUI/Mantine (fi
 contract, bundle weight).
 **Consequences:** DESIGN.md gains the expressive-direction note (§13); AGENTS.md notes this
 sanction. Ambient animation is decorative, aria-hidden, and reduced-motion-safe.
+
+## D-031 · 2026-10-25 · Booth start flow (layout choice moves off the landing), live-view session fixes, continuous capture
+**Context:** Owner: "when we press Start the Booth there should be the selection of the layouts…
+the layouts selection should not belong in the home/landing page," plus "an X button here… does
+absolutely nothing," plus a manual-vs-continuous capture toggle in the camera view.
+**Decision:** (1) Landing no longer hosts the layout picker — **Start the Booth** (hero and closing
+CTA) opens a "Choose your layout" sheet holding the live preview, all 18 layouts, session settings
+(countdown/sound/mirror/continuous), and a Continue button that leads into the existing camera
+permission explainer; a compact CTA band closes the landing. (2) Root-caused the dead X button:
+the discard ConfirmDialog only rendered on the landing branch, so in live/review phases the X set
+state for a dialog that did not exist. The dialog now renders in every phase branch. (3) New
+`continuous` setting (localStorage pref, sanitized in prefs.ts, default off): a Manual/Continuous
+segmented control in the live view; in continuous mode each captured shot schedules the next
+countdown ~900 ms later until the session completes — timer held in a ref, cancelled on end
+session/retake/unmount, and re-checked against live state (phase + setting) before firing. The
+shutter hint reflects the mode. PRD journey updated to the new flow.
+**Verified in-browser:** landing has no picker card; sheet opens with 18 layouts + settings +
+Continue → explainer; X opens "End this session?" from the live view; toggle flips, hint updates,
+and persists. Gates: typecheck/lint/54 tests/build green.
+**Consequences:** capture.addShot order unchanged; continuous respects the countdown setting per
+shot (set countdown 0 for back-to-back instant shots); retakes always end after one shot.

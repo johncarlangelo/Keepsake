@@ -84,6 +84,14 @@ Statuses: `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`. Acceptance criteria re
       pass, Studio film-stage pane, App shell hairline + footer. Verified in-browser at 1280/375:
       no overflow, CTAs hittable, D-027 studio containment audit clean.
 
+## Phase 18 — Booth flow rework & capture modes — DONE (2026-10-25, D-031)
+- [x] **T18.1** Layout selection moved into a "Choose your layout" start sheet (Start the Booth →
+      layout + session settings → camera explainer); landing picker removed, CTA band added.
+- [x] **T18.2** Dead X button root-caused (dialog rendered on landing branch only) and fixed by
+      rendering the discard dialog in every phase branch.
+- [x] **T18.3** Manual/Continuous capture toggle in the live view; continuous auto-fires each
+      remaining shot (ref-held timer, cancelled on end/retake/unmount); setting persisted.
+
 ## Open follow-ups (not blockers)
 - Tier C device testing (VERIFY C1–C6) when hardware available — required before claiming any
   platform as verified.

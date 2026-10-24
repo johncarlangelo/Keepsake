@@ -189,6 +189,8 @@ export interface AppSettings {
   countdown: 0 | 3 | 5
   sound: boolean
   mirrorSave: boolean
+  /** Continuous mode: auto-fire every shot of the session without touching the shutter. */
+  continuous: boolean
   lastTemplateId: string
   exportScale: 2 | 3
 }
