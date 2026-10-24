@@ -7,6 +7,7 @@ import { useEditor } from '../state/editor'
 import { navigate } from '../route'
 import { Button, Chip, ConfirmDialog, EmptyState, IconButton, Modal, Sheet } from '../components/ui'
 import { Icon } from '../components/icons'
+import { SectionHeading } from '../components/showcase'
 import { pooledUrl, revokeUrl } from '../lib/images'
 import { getPhoto } from '../lib/db'
 import { downloadBlob, exportFilename } from '../lib/share'
@@ -75,11 +76,25 @@ export function GalleryScreen() {
         </div>
       ) : entries.length === 0 ? (
         <EmptyState>
-          <svg viewBox="0 0 64 64" width="72" height="72" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-            <rect x="14" y="8" width="36" height="48" rx="4" />
-            <circle cx="32" cy="30" r="9" />
-            <path d="M24 46h16" />
-          </svg>
+          <div aria-hidden="true" className="relative h-28 w-24">
+            {[-8, 0, 8].map((deg, i) => (
+              <div
+                key={deg}
+                className="animate-develop absolute inset-x-0 mx-auto h-24 w-16 rounded-sm border border-line bg-surface p-1.5 shadow-2"
+                style={{
+                  transform: `rotate(${deg}deg)`,
+                  top: i * 4,
+                  animationDelay: `${i * 0.35}s`,
+                }}
+              >
+                <div
+                  className="h-12 w-full rounded-[2px]"
+                  style={{ background: ['linear-gradient(135deg,#d9b8a6,#c98a8a)', 'linear-gradient(135deg,#aebf9f,#6e7f5e)', 'linear-gradient(135deg,#b9c6d8,#8a9b8a)'][i] }}
+                />
+                <div className="mt-1.5 h-1 w-8 rounded-full bg-surface-2" />
+              </div>
+            ))}
+          </div>
           <h2>No photos yet</h2>
           <p className="muted">Photos you take in the booth appear here automatically — nothing to save, nothing uploaded.</p>
           <Button icon="camera" onClick={() => navigate('booth')}>
@@ -89,9 +104,7 @@ export function GalleryScreen() {
       ) : (
         <>
           <section aria-label="Finished strips" className="mb-8">
-            <h2 className="mb-3 font-display text-[1.05rem] font-semibold">
-              Finished strips{strips.length > 0 ? <span className="muted text-sm font-normal"> · {strips.length}</span> : null}
-            </h2>
+            <SectionHeading icon="heart" count={strips.length}>Finished strips</SectionHeading>
             {strips.length === 0 ? (
               <p className="muted text-sm">
                 No finished strips yet — compose one in the Studio, then “Save strip to Gallery” from Export.
@@ -113,9 +126,7 @@ export function GalleryScreen() {
             )}
           </section>
           <section aria-label="Photos">
-            <h2 className="mb-3 font-display text-[1.05rem] font-semibold">
-              Photos{captures.length > 0 ? <span className="muted text-sm font-normal"> · {captures.length}</span> : null}
-            </h2>
+            <SectionHeading icon="aperture" count={captures.length}>Photos</SectionHeading>
             {captures.length === 0 ? (
               <p className="muted text-sm">Photos you take in the booth appear here automatically.</p>
             ) : (
@@ -252,7 +263,7 @@ function GalleryTile({
         'aria-pressed:border-rose-deep aria-pressed:ring-2 aria-pressed:ring-rose-deep',
         variant === 'strip'
           ? 'h-[210px] wide:h-[250px] [&>img]:h-full [&>img]:object-contain [&>img]:p-2'
-          : 'aspect-square [&>img]:h-full [&>img]:w-full [&>img]:object-cover',
+          : 'aspect-square [&>img]:h-full [&>img]:w-full [&>img]:object-cover [&>img]:transition-transform [&>img]:duration-300 group-hover:[&>img]:scale-105',
       ].join(' ')}
     >
       {entry.corrupt || !entry.thumbUrl ? (

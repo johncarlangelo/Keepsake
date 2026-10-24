@@ -83,6 +83,11 @@ export function App() {
           })}
         </nav>
       </header>
+      {/* gradient hairline — the brand spectrum under the chrome */}
+      <div
+        aria-hidden="true"
+        className="h-0.5 bg-gradient-to-r from-rose via-gold-soft to-sage opacity-60"
+      />
 
       <main
         id="main"
@@ -103,6 +108,14 @@ export function App() {
           {view === 'booth' ? <BoothScreen /> : view === 'studio' ? <StudioScreen /> : <GalleryScreen />}
         </motion.div>
       </main>
+
+      <footer className="hidden wide:block">
+        <div className="mx-auto flex max-w-[var(--content-max)] items-center gap-3 px-4 pb-8 pt-2">
+          <span aria-hidden="true" className="h-px flex-1 bg-line" />
+          <p className="m-0 font-script text-lg text-ink-faint">made with care — nothing ever leaves this device ✦</p>
+          <span aria-hidden="true" className="h-px flex-1 bg-line" />
+        </div>
+      </footer>
 
       <nav
         aria-label="Primary"

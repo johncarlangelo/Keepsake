@@ -76,6 +76,14 @@ Statuses: `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`. Acceptance criteria re
 - [x] **T16.4** ARCHITECHTURE stack table + module map updated; README tree unchanged
       (`src/styles` still exists, now holding only `theme.css`). CI four gates unchanged.
 
+## Phase 17 — Expressive showcase redesign — DONE (2026-10-25, D-030)
+- [x] **T17.1** `src/components/showcase.tsx` + `booth-sections.tsx`: AuroraBackdrop,
+      SpotlightCard, Marquee, FanStrips, StepCard, SectionHeading, HeroStage, FeatureBento,
+      HowItWorks — zero new runtime dependencies.
+- [x] **T17.2** Booth landing rebuilt (hero stage + marquee + bento + steps), Gallery expressive
+      pass, Studio film-stage pane, App shell hairline + footer. Verified in-browser at 1280/375:
+      no overflow, CTAs hittable, D-027 studio containment audit clean.
+
 ## Open follow-ups (not blockers)
 - Tier C device testing (VERIFY C1–C6) when hardware available — required before claiming any
   platform as verified.

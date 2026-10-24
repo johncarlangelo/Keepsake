@@ -207,3 +207,17 @@ Three primary destinations (bottom tab bar on phone/tablet portrait; top nav ≥
 ## 12. References consulted
 
 Skill guidance applied: `ui-ux-pro-max` (contrast, touch targets, motion checklist, no-emoji-icons, focus states — database queried 2026-10-24; its generic palette suggestions were overridden by this product's charter), `frontend-ui-engineering` (component architecture, state-tier choice, empty/error states, anti-"AI aesthetic"), `web-animation-design` (easing blueprint, duration table, reduced-motion rules).
+
+## 13. Expressive direction (2026-10-25 — per owner authorization, see D-030)
+
+The Analog Heartbreak system stands (tokens §1–4 are still the only color/spacing contract), but
+the presentation layer is explicitly **expressive**, in the spirit of NextUI/Tailwind-UI marketing
+sections: ambient aurora gradients, spotlight cards, marquees, floating photo strips, gradient
+accents and display typography are first-class. Rules that still bind:
+
+- New colors enter `@theme` first (e.g. the `*-soft` gradient stops); no raw hex in components.
+- Ambient animation is transform/opacity-only, decorative (`aria-hidden`), and silenced by the
+  global reduced-motion rule.
+- Every feature claim shown in marketing UI (layout counts, frame counts) reads from the data
+  registries — never hardcoded.
+- Emoji stay banned as icons (lucide only). Contrast floors (§4) still apply to text.

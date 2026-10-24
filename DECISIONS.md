@@ -319,3 +319,27 @@ exact, strip never clipped, no horizontal overflow; all tabs click through (Radi
 162 KB gz JS (+14 from cva/tw-merge/tabs) + 9.8 KB gz CSS (−2) — well under the 250 KB budget.
 **Consequences:** new code styles with utilities referencing `@theme` tokens only; `muted` is the
 one component-layer text helper; disabled buttons are pointer-events:none (shadcn default).
+
+## D-030 · 2026-10-25 · Expressive showcase layer: aurora hero, spotlight bento, marquee, film stage
+**Context:** Owner after the Tailwind migration: "lots of empty spaces… go wild with the front
+end… eye catching… you have creative freedom; you may disregard or update DESIGN.md/AGENTS.md for
+UI/UX." Owner pointed at prismic.io's React component libraries roundup; its Tailwind-native,
+animation-forward picks are NextUI (Tailwind Variants + Framer Motion + React Aria) and Tailwind
+UI's marketing sections, with shadcn already adopted (D-029).
+**Decision:** Adopted the *pattern language* of those libraries rather than their packages —
+hand-built showpieces on the existing stack (motion + Tailwind v4 + tokens), zero new runtime
+dependencies: `src/components/showcase.tsx` (AuroraBackdrop drifting gradient blobs, SpotlightCard
+with pointer-tracked glow, Marquee band, FanStrips hero art, StepCard, SectionHeading) and
+`src/components/booth-sections.tsx` (HeroStage, FeatureBento with live strip canvas, HowItWorks).
+New tokens only in `@theme` (rose-soft/gold-soft/sage-soft gradient stops; ks-aurora/ks-marquee/
+ks-float/ks-bob/ks-sheen keyframes — transform/opacity only, killed by the global reduced-motion
+rule). Booth landing = hero stage + marquee + bento + 3 steps + layout picker; Gallery = icon
+section headings with count pills, polaroid-stack empty state, hover zoom; Studio = film-stage
+pane with sprocket edges (containment classes unchanged, audit re-verified); App shell = gradient
+hairline under the header + script footer on wide screens. Feature copy pulls live counts from
+the data registries (TEMPLATES/FRAMES/STICKERS) so docs and UI never disagree.
+**Alternatives:** installing NextUI/HeroUI (own theme plugin + tailwind-variants, plugin conflicts
+with v4, big dep for ~6 components); Tailwind UI (paid license); MUI/Mantine (fight the token
+contract, bundle weight).
+**Consequences:** DESIGN.md gains the expressive-direction note (§13); AGENTS.md notes this
+sanction. Ambient animation is decorative, aria-hidden, and reduced-motion-safe.

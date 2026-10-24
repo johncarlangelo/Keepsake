@@ -20,9 +20,9 @@ real-device testing (Tier C).
   README with deployment instructions.
 
 ## In progress
-- None. Tailwind migration + UI redesign complete (D-028/D-029, TASKS Phase 16) — all screens on
-  Tailwind v4 utilities with the cva/shadcn-pattern kit; legacy stylesheets deleted; D-027
-  geometry audit re-verified clean at 375–1440.
+- None. Expressive showcase redesign complete (D-030, TASKS Phase 17): aurora hero, spotlight
+  bento, marquee, film-stage studio, gallery styling — built on the existing stack with zero new
+  dependencies; gates green (54/54 tests); verified at 1280 and 375 widths.
 
 ## Blockers & known limitations
 - **Owner's desktop "covered buttons" report** — root-caused and structurally fixed via the D-027

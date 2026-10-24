@@ -15,6 +15,7 @@ import { Button, Chip, ChipRow, ConfirmDialog, Card, Modal, Sheet } from '../com
 import { Icon } from '../components/icons'
 import { TemplatePicker } from '../components/pickers'
 import { StripCanvas } from '../components/StripCanvas'
+import { HeroStage, FeatureBento, HowItWorks } from '../components/booth-sections'
 import type { StripTemplate } from '../types'
 
 export function BoothScreen() {
@@ -287,39 +288,17 @@ export function BoothScreen() {
   )
   return (
     <section className="animate-enter" aria-label="Keepsake photobooth">
-      <div className="grid items-center gap-6 pt-3 [grid-template-columns:minmax(0,1fr)] wide:gap-12 wide:[grid-template-columns:minmax(0,1.25fr)_minmax(0,0.75fr)]">
-        <div className="min-w-0">
-          <p className="mb-2 inline-flex items-center gap-2 rounded-[999px] border border-line bg-surface px-3 py-1 text-xs font-semibold tracking-wide text-ink-soft uppercase animate-enter">
-            <span className="inline-block size-1.5 rounded-full bg-sage" aria-hidden="true" />
-            Film photobooth · nothing uploaded
-          </p>
-          <h1 className="mb-3 text-[clamp(1.8rem,6vw,2.6rem)] animate-enter [animation-delay:60ms]">
-            A film photobooth
-            <br />
-            that <em className="font-script text-rose-deep">keeps</em> your moments.
-          </h1>
-          <p className="muted mb-5 max-w-prose animate-enter [animation-delay:120ms]">
-            Take a strip, play with film filters and playful frames, and keep everything in Keepsake's own gallery — right on this
-            device. Nothing is ever uploaded.
-          </p>
-          <div className="mb-2 flex flex-wrap gap-3 animate-enter [animation-delay:180ms]">
-            <Button icon="camera" onClick={() => setShowExplainer(true)}>
-              Start the Booth
-            </Button>
-            <Button variant="secondary" icon="gallery" onClick={() => navigate('gallery')}>
-              Use Gallery photos
-            </Button>
-          </div>
-          {storageNote ? (
-            <p role="status" className="mt-2 flex items-center gap-1.5 text-sm text-gold animate-enter [animation-delay:220ms]">
-              <Icon name="info" size={16} /> {storageNote}
-            </p>
-          ) : null}
-        </div>
-        <HeroStrip />
-      </div>
+      <HeroStage
+        templateLabel={`${template.name} · ${template.shots} ${template.shots === 1 ? 'shot' : 'shots'}`}
+        storageNote={storageNote}
+        onStart={() => setShowExplainer(true)}
+        onUseGallery={() => navigate('gallery')}
+      />
 
-      <Card className="mt-8 wide:mt-12">
+      <FeatureBento previewComp={previewComp} templateLabel={template.name} />
+      <HowItWorks />
+
+      <Card className="mt-10">
         <div className="grid items-start gap-6 [grid-template-columns:minmax(0,1fr)] wide:grid-cols-[minmax(0,1fr)_280px] wide:gap-8">
           <div className="min-w-0">
             <h2 className="mb-1 text-xl">Pick a layout</h2>
@@ -596,33 +575,6 @@ function ReviewView({
         <Button variant="ghost" onClick={onDiscard}>
           End session
         </Button>
-      </div>
-    </div>
-  )
-}
-
-function HeroStrip(): React.ReactNode {
-  return (
-    <div
-      aria-hidden="true"
-      className="flex justify-center [perspective:900px] animate-enter [animation-delay:120ms] wide:[transform:rotateX(4deg)]"
-    >
-      <div className="relative">
-        {/* back frame for depth */}
-        <div className="absolute inset-0 translate-x-3 translate-y-4 rotate-[-3deg] rounded-md border border-line bg-surface-2 shadow-2" />
-        <div className="relative flex w-[min(180px,36vw)] rotate-[3deg] flex-col gap-2 rounded-md border border-line bg-surface p-3 shadow-2 transition-transform duration-200 hover:rotate-[1deg]">
-          {[0, 1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="animate-develop aspect-[16/10] rounded-[5px]"
-              style={{
-                background: 'linear-gradient(135deg, #d9b8a6 0%, #c98a8a 42%, #8a9b8a 78%, #6e5f4e 100%)',
-                animationDelay: `${i * 0.7}s`,
-              }}
-            />
-          ))}
-          <span className="text-center font-script text-[22px] text-ink-soft">keepsake ✦</span>
-        </div>
       </div>
     </div>
   )

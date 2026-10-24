@@ -16,9 +16,12 @@
   --color-rose: #c4797f;
   --color-rose-deep: #a3565e;
   --color-rose-ink: #8c454d;
+  --color-rose-soft: #e5a9ad;
   --color-blush: #f4e3dc;
   --color-gold: #b98a2f;
+  --color-gold-soft: #d9b968;
   --color-sage: #7d8b6a;
+  --color-sage-soft: #a9b795;
   --color-line: #e4d8c2;
   --color-danger: #a83a32;
   --color-focus: #a3565e;
@@ -58,6 +61,10 @@
   --animate-scale-in: ks-scale-in 220ms var(--ease-brand);
   --animate-scale-out: ks-scale-out 150ms var(--ease-brand);
   --animate-shutter-ring: ks-ring 900ms var(--ease-brand) infinite;
+  --animate-aurora: ks-aurora 16s ease-in-out infinite alternate;
+  --animate-marquee: ks-marquee 36s linear infinite;
+  --animate-float: ks-float 7s ease-in-out infinite;
+  --animate-bob: ks-bob 5s ease-in-out infinite;
 
   @keyframes ks-enter {
     from { opacity: 0; transform: translateY(8px) scale(0.97); }
@@ -96,6 +103,28 @@
   @keyframes ks-ring {
     0% { opacity: 0.7; transform: scale(1); }
     100% { opacity: 0; transform: scale(1.65); }
+  }
+  /* showpiece motion (D-030) — ambient, GPU-cheap transforms only */
+  @keyframes ks-aurora {
+    0% { transform: translate3d(-6%, -4%, 0) scale(1); }
+    50% { transform: translate3d(5%, 6%, 0) scale(1.15); }
+    100% { transform: translate3d(-3%, 8%, 0) scale(0.95); }
+  }
+  @keyframes ks-marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes ks-float {
+    0%, 100% { transform: translateY(0) rotate(3deg); }
+    50% { transform: translateY(-14px) rotate(2.2deg); }
+  }
+  @keyframes ks-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes ks-sheen {
+    0% { transform: translateX(-120%) skewX(-18deg); }
+    60%, 100% { transform: translateX(240%) skewX(-18deg); }
   }
 
   /* ---------- breakpoints ---------- */
@@ -288,6 +317,44 @@
   /* text helpers used across screens */
   .muted {
     color: var(--color-ink-soft);
+  }
+
+  /* shimmer sweep for hero CTAs — a skewed highlight that crosses on hover */
+  .sheen {
+    position: relative;
+    overflow: hidden;
+  }
+  .sheen::after {
+    content: '';
+    position: absolute;
+    top: -20%;
+    bottom: -20%;
+    left: 0;
+    width: 40%;
+    background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.35) 50%, transparent 100%);
+    transform: translateX(-120%) skewX(-18deg);
+    pointer-events: none;
+  }
+  .sheen:hover::after {
+    animation: ks-sheen 1.1s var(--ease-brand);
+  }
+
+  /* pointer-tracked spotlight for bento cards: JS sets --mx/--my (px) */
+  .spotlight {
+    position: relative;
+  }
+  .spotlight::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(196, 121, 127, 0.14), transparent 65%);
+    opacity: 0;
+    transition: opacity 300ms ease;
+    pointer-events: none;
+  }
+  .spotlight:hover::before {
+    opacity: 1;
   }
 
   /* staggered entrances for tile/picker grids — cleaner here than per-item classes */

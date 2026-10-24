@@ -191,8 +191,17 @@ export function StudioScreen() {
             and clips overflow — nothing can ever paint over a sibling (D-027). */}
         <div
           key={`${comp.templateId}:${comp.frameId}`}
-          className="flex h-[clamp(300px,52dvh,560px)] min-w-0 justify-center overflow-hidden wide:h-[clamp(420px,calc(100dvh-330px),760px)]"
+          className="relative flex h-[clamp(300px,52dvh,560px)] min-w-0 justify-center overflow-hidden rounded-lg border border-line bg-surface p-3 shadow-1 wide:h-[clamp(420px,calc(100dvh-330px),760px)]"
         >
+          {/* film sprocket edges — decorative, pointer-transparent */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-3 left-2.5 w-2 rounded-[2px] opacity-70 [background-image:repeating-linear-gradient(180deg,var(--color-surface-2)_0_7px,transparent_7px_15px)]"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-3 right-2.5 w-2 rounded-[2px] opacity-70 [background-image:repeating-linear-gradient(180deg,var(--color-surface-2)_0_7px,transparent_7px_15px)]"
+          />
           <StripCanvas comp={comp} images={images} interactive onSlotTap={onSlotTap} />
         </div>
 

@@ -8,11 +8,13 @@ import {
   Camera,
   Download,
   Frame,
+  Heart,
   Images,
   LayoutGrid,
   Plus,
   RotateCcw,
   Share2,
+  Shield,
   SlidersHorizontal,
   Sticker,
   SwitchCamera,
@@ -49,6 +51,8 @@ export type IconName =
   | 'sliders'
   | 'arrowLeft'
   | 'arrowRight'
+  | 'shield'
+  | 'heart'
 
 const MAP: Record<IconName, typeof Aperture> = {
   aperture: Aperture,
@@ -74,6 +78,8 @@ const MAP: Record<IconName, typeof Aperture> = {
   sliders: SlidersHorizontal,
   arrowLeft: ChevronLeft,
   arrowRight: ChevronRight,
+  shield: Shield,
+  heart: Heart,
 }
 
 export function Icon({ name, size = 24, className }: { name: IconName; size?: number; className?: string }): JSX.Element {

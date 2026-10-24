@@ -9,7 +9,9 @@ Keepsake coherent, honest, and safe. When agent output conflicts with these rule
    and any `DECISIONS.md` entries touching the area you work on.
 2. Check `TASKS.md` for task status and dependencies; move the task you take to `IN_PROGRESS`.
 3. Follow the existing architecture (`ARCHITECHTURE.md §2`) and the design tokens (`DESIGN.md §1–4`).
-   Raw hex values, off-scale spacing, and emoji-as-icons are bugs.
+   Raw hex values, off-scale spacing, and emoji-as-icons are bugs. Expressive showcase styling
+   (aurora/spotlight/marquee hero treatments, §13) is sanctioned per owner authorization (D-030);
+   tokens in `@theme` remain the only color source.
 
 ## While you work
 
