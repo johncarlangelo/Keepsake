@@ -14,7 +14,7 @@ required file list (see `DECISIONS.md` D-013).
 | State | **Zustand** (3 small stores) | Editor history without prop drilling; no Redux weight |
 | Tests | **Vitest** + jsdom + Testing Library + `fake-indexeddb` + `jest-canvas-mock` | Unit + component tests of geometry, storage, state |
 | Lint | ESLint 9 (`typescript-eslint`, `react-hooks`) | CI gate |
-| Styling | Hand-written CSS with design tokens (`src/styles/*.css`) | No framework weight; tokens are the contract |
+| Styling | **Tailwind CSS v4** (devDependency, `@tailwindcss/vite`); Analog Heartbreak tokens mapped in CSS-first `@theme` — see D-028 | Utility classes for components; tokens remain the contract; zero runtime JS. `src/styles/*.css` migrating to tokens + global rules only |
 | Fonts | Self-hosted WOFF2 (Fraunces, Caveat — SIL OFL) | Privacy charter: zero third-party runtime requests |
 
 No other runtime dependencies. Anything new requires a `DECISIONS.md` entry.

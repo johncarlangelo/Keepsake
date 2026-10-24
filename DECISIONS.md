@@ -7,10 +7,11 @@ new entry referencing the old one.
 
 ## D-001 · 2026-10-24 · Frontend stack: Vite + React 18 + TypeScript + Zustand
 **Context:** Greenfield static app; needs modularity, testability, fast builds, GH Pages/Vercel output.
-**Decision:** Vite 6, React 18, strict TS, Zustand for the three stores, plain CSS with tokens.
+**Decision:** Vite 6, React 18, strict TS, Zustand for the three stores, plain CSS with tokens
+(styling choice superseded by D-028 — Tailwind).
 **Alternatives:** Vanilla TS (leaner but slower to build a full editor UI), Next.js (server
 features explicitly out of scope), Tailwind (fine, but hand CSS keeps the token contract explicit
-and the bundle lean).
+and the bundle lean — adopted later per owner decision, see D-028).
 **Consequences:** Minimal deps; editor state trivially testable as pure stores; anyone adding a
 runtime dependency must justify it here. Follow-ups: keep bundle budget < ~250 KB gz initial.
 
@@ -269,3 +270,26 @@ deleted so no stale cascade remains.
 to bottom — Undo/Redo/Reset/Export and every tab pill in-viewport and elementFromPoint-hittable;
 canvas|panel side-by-side ≥900 with zero overlap, stacked <900; sticky band pinned at header bottom
 while scrolled; no horizontal overflow; strip canvas never collapses; tab switching swaps panels.
+
+## D-028 · 2026-10-25 · Styling moves from hand-written CSS to Tailwind CSS (supersedes D-001 styling)
+**Context:** Owner decision: "we are now moving to tailwind css instead of vanilla css." Comes
+after the D-024 component-library adoption (Radix/Motion/Lucide) and the D-027 studio layout
+rebuild — the owner wants the styling layer on the same modern utility stack as the components.
+**Decision:** Adopt **Tailwind CSS v4** as the styling system. v4's CSS-first `@theme` config maps
+the existing Analog Heartbreak custom properties (colors, radii, shadows, fonts, motion tokens)
+into theme tokens, so the token contract survives unchanged — utilities replace hand-written
+component rules in `src/styles/`. Tailwind is a devDependency only (build-time; zero runtime JS;
+v4 emits only the utilities actually used). Docs updated with this entry: ARCHITECHTURE §1 styling
+row, DESIGN §11 token rule, TASKS Phase 16, PPROGRESS.
+**Migration constraints (owner's standing rules still apply):**
+- Zero visual regression — the D-027 studio containment geometry must hold exactly (audited
+  widths re-checked after migration).
+- Tokens stay the single source: new values go into `@theme`, never arbitrary hex in classes.
+- Incremental migration screen-by-screen; delete each vanilla block as it is replaced so the two
+  systems never drift long-term. CI's four gates unchanged.
+**Alternatives:** keep vanilla CSS (owner explicitly declined); Tailwind v3 with JS config
+(older config model, larger setup — v4 is current); styled-components/Emotion (runtime-in-JS,
+against the no-runtime-weight posture).
+**Consequences:** New devDependency (`tailwindcss` + `@tailwindcss/vite`); class-based styling is
+now the norm for new code; existing `src/styles/*.css` shrinks to tokens + a few global rules
+(keyframes, canvas-specific selectors) as screens migrate.

@@ -20,7 +20,9 @@ real-device testing (Tier C).
   README with deployment instructions.
 
 ## In progress
-- None. (Studio layout refactored D-027; awaiting owner's next check on their desktop.)
+- **Tailwind CSS migration (D-028, decided 2026-10-25)** — docs updated; code migration is the
+  next code task (TASKS Phase 16: install Tailwind v4 + `@theme` token mapping, migrate
+  screen-by-screen, re-audit D-027 geometry, zero visual regression).
 
 ## Blockers & known limitations
 - **Owner's desktop "covered buttons" report** — root-caused and structurally fixed via the D-027

@@ -65,6 +65,17 @@ Statuses: `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`. Acceptance criteria re
       npm cache, then the four real gates: typecheck → lint → test → build). Verified green on
       GitHub Actions: runs 40105098575 and 40105184558, both ✓ 27 s.
 
+## Phase 16 — Tailwind CSS migration — IN_PROGRESS (decided, D-028; code migration pending)
+- [ ] **T16.1** Add `tailwindcss` + `@tailwindcss/vite` (devDeps); map Analog Heartbreak tokens
+      into CSS-first `@theme`; gates green with Tailwind active alongside existing styles.
+- [ ] **T16.2** Migrate UI kit + screens from hand-written component CSS to utilities,
+      file-by-file (`ui.css` → components, `screens.css` → screens), deleting each vanilla block
+      as it is replaced.
+- [ ] **T16.3** Re-run the D-027 studio geometry/hit-test audit (375–1440) + cross-viewport
+      sweep after migration — zero visual regression required.
+- [ ] **T16.4** Update ARCHITECHTURE §2 module map + README tree once `src/styles` shrinks to
+      tokens + global rules; CI four gates stay unchanged.
+
 ## Open follow-ups (not blockers)
 - Tier C device testing (VERIFY C1–C6) when hardware available — required before claiming any
   platform as verified.

@@ -202,7 +202,7 @@ Three primary destinations (bottom tab bar on phone/tablet portrait; top nav ≥
 - New filter: add preset object to `src/data/filters.ts` under a category; preview thumbnails render from the active photo automatically.
 - New frame: add to `src/data/frames.ts`; frame *rendering* code lives beside the definition; must render identically at preview and export scales (use normalized drawing units).
 - New sticker: add path data to the sticker set; keep paths ≤ 2 KB.
-- Any new token goes in `tokens.css` first; no raw hex in components.
+- Any new token goes in the Tailwind `@theme` block first (the Analog Heartbreak custom properties live there — see D-028); no raw hex or arbitrary values in component classes.
 
 ## 12. References consulted
 
