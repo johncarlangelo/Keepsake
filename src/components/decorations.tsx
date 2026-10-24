@@ -2,7 +2,7 @@
 import { STICKERS, STICKER_PALETTE } from '../data/stickers'
 import { endInteraction, useEditor } from '../state/editor'
 import type { TextConfig } from '../types'
-import { Button, Segmented, Slider } from './ui'
+import { Button, Card, Chip, ChipRow, Input, PickerCard, Segmented, Slider } from './ui'
 import { Icon } from './icons'
 
 export function StickerTray(): React.ReactNode {
@@ -11,51 +11,39 @@ export function StickerTray(): React.ReactNode {
 
   return (
     <div>
-      <p className="muted tiny" style={{ marginBottom: 12 }}>
-        Tap a sticker to place it, then drag it on the strip.
-      </p>
-      <div role="radiogroup" aria-label="Stickers" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 10 }}>
+      <p className="muted mb-3 text-sm">Tap a sticker to place it, then drag it on the strip.</p>
+      <div role="radiogroup" aria-label="Stickers" className="grid gap-2.5 [grid-template-columns:repeat(auto-fill,minmax(64px,1fr))]">
         {STICKERS.map((s) => (
-          <button
+          <PickerCard
             key={s.id}
             onClick={() => addSticker(s.id)}
             title={`Add ${s.name}`}
             aria-label={`Add ${s.name} sticker`}
-            className="picker-card"
-            style={{
-              padding: 10,
-              borderRadius: 12,
-              border: '1px solid var(--line)',
-              background: 'var(--surface)',
-              cursor: 'pointer',
-              display: 'grid',
-              placeItems: 'center',
-            }}
+            className="grid place-items-center p-2.5"
           >
             <svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true">
               <path d={s.path} fill={s.defaultColor} />
             </svg>
-          </button>
+          </PickerCard>
         ))}
       </div>
 
       {placed ? (
-        <div className="card" style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <strong className="tiny">Selected sticker</strong>
-          <div className="chip-row" role="group" aria-label="Sticker color">
+        <Card className="mt-4 flex flex-col gap-3">
+          <strong className="text-sm">Selected sticker</strong>
+          <ChipRow label="Sticker color" className="pb-1">
             {STICKER_PALETTE.map((c) => (
-              <button
+              <Chip
                 key={c}
                 aria-label={`Color ${c}`}
-                aria-pressed={placed.color === c}
-                className="chip"
+                active={placed.color === c}
                 onClick={() => updateSticker(placed.uid, { color: c })}
-                style={{ background: placed.color === c ? 'var(--blush)' : undefined, minWidth: 44, justifyContent: 'center' }}
+                className="min-w-11 justify-center"
               >
-                <span style={{ width: 20, height: 20, borderRadius: '50%', background: c, border: '1px solid rgba(0,0,0,0.15)', display: 'inline-block' }} />
-              </button>
+                <span className="inline-block size-5 rounded-full border border-black/15" style={{ background: c }} />
+              </Chip>
             ))}
-          </div>
+          </ChipRow>
           <Slider
             label="Size"
             value={placed.scale}
@@ -82,7 +70,7 @@ export function StickerTray(): React.ReactNode {
             onCommit={endInteraction}
             format={(v) => `${Math.round(v)}°`}
           />
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="ghost" icon="arrowLeft" onClick={() => bumpSticker(placed.uid, -1)}>
               Back
             </Button>
@@ -93,7 +81,7 @@ export function StickerTray(): React.ReactNode {
               Remove
             </Button>
           </div>
-        </div>
+        </Card>
       ) : null}
     </div>
   )
@@ -110,14 +98,13 @@ const TEXT_COLORS: Array<{ value: string; label: string }> = [
 
 export function TextPanel({ text, onChange }: { text: TextConfig; onChange: (patch: Partial<TextConfig>) => void }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="flex flex-col gap-4">
       <div>
-        <label htmlFor="caption" className="tiny muted" style={{ display: 'block', marginBottom: 6 }}>
+        <label htmlFor="caption" className="muted mb-1.5 block text-sm">
           Caption
         </label>
-        <input
+        <Input
           id="caption"
-          className="text-input"
           type="text"
           maxLength={60}
           value={text.caption}
@@ -125,13 +112,13 @@ export function TextPanel({ text, onChange }: { text: TextConfig; onChange: (pat
           onChange={(e) => onChange({ caption: e.target.value })}
         />
       </div>
-      <div className="check-row">
-        <input id="show-date" type="checkbox" checked={text.showDate} onChange={(e) => onChange({ showDate: e.target.checked })} />
-        <label htmlFor="show-date">Date stamp</label>
+      <div className="flex items-center gap-3 py-0.5">
+        <input id="show-date" type="checkbox" className="size-5 accent-[var(--color-rose)]" checked={text.showDate} onChange={(e) => onChange({ showDate: e.target.checked })} />
+        <label htmlFor="show-date" className="flex-1">Date stamp</label>
       </div>
       <div>
-        <span className="tiny muted">Font</span>
-        <div style={{ marginTop: 6 }}>
+        <span className="muted text-sm">Font</span>
+        <div className="mt-1.5">
           <Segmented
             label="Caption font"
             value={text.font}
@@ -146,8 +133,8 @@ export function TextPanel({ text, onChange }: { text: TextConfig; onChange: (pat
         </div>
       </div>
       <div>
-        <span className="tiny muted">Alignment</span>
-        <div style={{ marginTop: 6 }}>
+        <span className="muted text-sm">Alignment</span>
+        <div className="mt-1.5">
           <Segmented
             label="Caption alignment"
             value={text.align}
@@ -160,18 +147,18 @@ export function TextPanel({ text, onChange }: { text: TextConfig; onChange: (pat
           />
         </div>
       </div>
-      <div className="chip-row" role="group" aria-label="Text color">
+      <ChipRow label="Text color" className="pb-1">
         {TEXT_COLORS.map((c) => (
-          <button key={c.value} className="chip" aria-pressed={text.color === c.value} onClick={() => onChange({ color: c.value })}>
+          <Chip key={c.value} active={text.color === c.value} onClick={() => onChange({ color: c.value })}>
             {c.value !== 'auto' ? (
-              <span style={{ width: 16, height: 16, borderRadius: '50%', background: c.value, border: '1px solid rgba(0,0,0,0.15)', display: 'inline-block' }} />
+              <span className="inline-block size-4 rounded-full border border-black/15" style={{ background: c.value }} />
             ) : (
               <Icon name="wand" size={16} />
             )}
             {c.label}
-          </button>
+          </Chip>
         ))}
-      </div>
+      </ChipRow>
       <Slider
         label="Text size"
         value={text.size}

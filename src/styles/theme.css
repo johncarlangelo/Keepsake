@@ -285,6 +285,11 @@
 }
 
 @layer components {
+  /* text helpers used across screens */
+  .muted {
+    color: var(--color-ink-soft);
+  }
+
   /* staggered entrances for tile/picker grids — cleaner here than per-item classes */
   .stagger > * {
     animation: var(--animate-enter);

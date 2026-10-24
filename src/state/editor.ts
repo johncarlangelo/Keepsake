@@ -8,7 +8,7 @@ import { getSticker } from '../data/stickers'
 
 const HISTORY_CAP = 40
 
-type ToolTab = 'layout' | 'filter' | 'frame' | 'text' | 'stickers' | 'adjust'
+export type ToolTab = 'layout' | 'filter' | 'frame' | 'text' | 'stickers' | 'adjust'
 
 interface EditorState {
   comp: Composition | null

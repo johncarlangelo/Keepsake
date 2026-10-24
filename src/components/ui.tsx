@@ -140,7 +140,12 @@ export function Chip({
   )
 }
 
-export function ChipRow({ children, label, className }: { children: ReactNode; label: string; className?: string }) {
+export function ChipRow({
+  children,
+  label,
+  className,
+  ...rest
+}: { children: ReactNode; label: string } & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       role="group"
@@ -149,6 +154,7 @@ export function ChipRow({ children, label, className }: { children: ReactNode; l
         'flex gap-2 overflow-x-auto py-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden wide:flex-wrap wide:overflow-visible',
         className
       )}
+      {...rest}
     >
       {children}
     </div>

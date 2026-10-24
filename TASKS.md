@@ -65,16 +65,16 @@ Statuses: `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`. Acceptance criteria re
       npm cache, then the four real gates: typecheck → lint → test → build). Verified green on
       GitHub Actions: runs 40105098575 and 40105184558, both ✓ 27 s.
 
-## Phase 16 — Tailwind CSS migration — IN_PROGRESS (decided, D-028; code migration pending)
-- [ ] **T16.1** Add `tailwindcss` + `@tailwindcss/vite` (devDeps); map Analog Heartbreak tokens
-      into CSS-first `@theme`; gates green with Tailwind active alongside existing styles.
-- [ ] **T16.2** Migrate UI kit + screens from hand-written component CSS to utilities,
-      file-by-file (`ui.css` → components, `screens.css` → screens), deleting each vanilla block
-      as it is replaced.
-- [ ] **T16.3** Re-run the D-027 studio geometry/hit-test audit (375–1440) + cross-viewport
-      sweep after migration — zero visual regression required.
-- [ ] **T16.4** Update ARCHITECHTURE §2 module map + README tree once `src/styles` shrinks to
-      tokens + global rules; CI four gates stay unchanged.
+## Phase 16 — Tailwind CSS migration — DONE (2026-10-25, D-028/D-029)
+- [x] **T16.1** `tailwindcss` + `@tailwindcss/vite` added; Analog Heartbreak tokens mapped into
+      CSS-first `@theme` in `src/styles/theme.css`; gates green with Tailwind active.
+- [x] **T16.2** UI kit rebuilt on cva + `cn()` (shadcn pattern) + Radix Tabs; App shell, Booth,
+      Studio, Gallery, pickers, filter picker, decorations all migrated to utilities. Legacy
+      tokens/base/ui/screens.css deleted — `theme.css` is the only stylesheet.
+- [x] **T16.3** D-027 studio geometry/hit-test audit re-run at 375/853/1093/1280/1440 (unscrolled
+      + scrolled): zero issues; all tab pills click through; strip never clipped; no h-overflow.
+- [x] **T16.4** ARCHITECHTURE stack table + module map updated; README tree unchanged
+      (`src/styles` still exists, now holding only `theme.css`). CI four gates unchanged.
 
 ## Open follow-ups (not blockers)
 - Tier C device testing (VERIFY C1–C6) when hardware available — required before claiming any

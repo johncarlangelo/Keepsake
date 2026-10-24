@@ -4,6 +4,7 @@ import type { Composition } from '../types'
 import { FRAMES } from '../data/frames'
 import { TEMPLATES } from '../data/templates'
 import { emptyComposition, renderComposition, type RenderImage, type RenderOptions } from '../render/compose'
+import { PickerCard } from './ui'
 
 const MINI_OPTS: RenderOptions = { placeholder: 'sample', text: false }
 
@@ -42,36 +43,21 @@ export function TemplatePicker({
     return map
   }, [])
   return (
-    <div role="radiogroup" aria-label="Strip layout" className="stagger-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: 12 }}>
+    <div role="radiogroup" aria-label="Strip layout" className="stagger-cards grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(88px,1fr))]">
       {TEMPLATES.map((t) => {
         const selected = t.id === selectedId
         const w = Math.min(84, Math.round((84 * t.canvas.w) / t.canvas.h))
         const h = Math.round((w * t.canvas.h) / t.canvas.w)
         return (
-          <button
-            key={t.id}
-            role="radio"
-            aria-checked={selected}
-            onClick={() => onSelect(t.id)}
-            className="picker-card"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 6,
-              padding: 8,
-              borderRadius: 12,
-              border: selected ? '2px solid var(--rose)' : '1px solid var(--line)',
-              background: selected ? 'var(--blush)' : 'var(--surface)',
-              cursor: 'pointer',
-            }}
-          >
+          <PickerCard key={t.id} role="radio" aria-checked={selected} onClick={() => onSelect(t.id)} className="gap-1.5">
             <MiniCanvas comp={comps[t.id]!} images={images} width={w} height={h} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: selected ? 'var(--rose-deep)' : 'var(--ink)' }}>{t.name}</span>
-            <span className="tiny muted">
+            <span className="text-xs font-semibold" style={{ color: selected ? 'var(--color-rose-deep)' : 'var(--color-ink)' }}>
+              {t.name}
+            </span>
+            <span className="muted text-[0.8125rem]">
               {t.shots} {t.shots === 1 ? 'shot' : 'shots'}
             </span>
-          </button>
+          </PickerCard>
         )
       })}
     </div>
@@ -96,31 +82,16 @@ export function FramePicker({
     return map
   }, [base])
   return (
-    <div role="radiogroup" aria-label="Frame theme" className="stagger-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))', gap: 12 }}>
+    <div role="radiogroup" aria-label="Frame theme" className="stagger-cards grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(76px,1fr))]">
       {FRAMES.map((f) => {
         const selected = f.id === selectedId
         return (
-          <button
-            key={f.id}
-            role="radio"
-            aria-checked={selected}
-            onClick={() => onSelect(f.id)}
-            className="picker-card"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 6,
-              padding: 8,
-              borderRadius: 12,
-              border: selected ? '2px solid var(--rose)' : '1px solid var(--line)',
-              background: 'var(--surface)',
-              cursor: 'pointer',
-            }}
-          >
+          <PickerCard key={f.id} role="radio" aria-checked={selected} onClick={() => onSelect(f.id)}>
             <MiniCanvas comp={frameComps[f.id]!} images={images} width={56} height={Math.round((56 * 1840) / 600)} />
-            <span style={{ fontSize: 11.5, fontWeight: 600, color: selected ? 'var(--rose-deep)' : 'var(--ink)' }}>{f.name}</span>
-          </button>
+            <span className="text-[11.5px] font-semibold" style={{ color: selected ? 'var(--color-rose-deep)' : 'var(--color-ink)' }}>
+              {f.name}
+            </span>
+          </PickerCard>
         )
       })}
     </div>

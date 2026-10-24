@@ -14,7 +14,7 @@ required file list (see `DECISIONS.md` D-013).
 | State | **Zustand** (3 small stores) | Editor history without prop drilling; no Redux weight |
 | Tests | **Vitest** + jsdom + Testing Library + `fake-indexeddb` + `jest-canvas-mock` | Unit + component tests of geometry, storage, state |
 | Lint | ESLint 9 (`typescript-eslint`, `react-hooks`) | CI gate |
-| Styling | **Tailwind CSS v4** (devDependency, `@tailwindcss/vite`); Analog Heartbreak tokens mapped in CSS-first `@theme` — see D-028 | Utility classes for components; tokens remain the contract; zero runtime JS. `src/styles/*.css` migrating to tokens + global rules only |
+| Styling | **Tailwind CSS v4** (devDependency, `@tailwindcss/vite`); Analog Heartbreak tokens mapped in CSS-first `@theme` — see D-028/D-029 | Utility classes for components; tokens remain the contract; zero runtime JS; `src/styles/theme.css` is the only stylesheet |
 | Fonts | Self-hosted WOFF2 (Fraunces, Caveat — SIL OFL) | Privacy charter: zero third-party runtime requests |
 
 No other runtime dependencies. Anything new requires a `DECISIONS.md` entry.
@@ -53,8 +53,11 @@ src/
     BoothScreen.tsx        # landing → live → review state machine
     StudioScreen.tsx       # canvas + tool sheet (Layout/Filter/Frame/Text/Stickers/Adjust)
     GalleryScreen.tsx      # grid, detail viewer, select mode
-  components/              # Button, Chip, Sheet, Modal, Toast, Slider, StripCanvas,
-                           # TemplatePicker, FilterPicker, FramePicker, StorageMeter, …
+  components/              # cva/Tailwind kit: Button, Chip, Sheet, Modal, Toast, Slider, Tabs,
+                           # StripCanvas, TemplatePicker, FilterPicker, FramePicker, …
+  styles/
+    theme.css              # Tailwind v4 entry: @theme tokens (the contract), base layer,
+                           # global keyframes — the ONLY stylesheet (D-028/D-029)
 tests/                     # unit & component tests (see VERIFY.md)
 ```
 

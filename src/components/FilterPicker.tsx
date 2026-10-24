@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { FILTERS, FILTER_CATEGORIES, getFilter } from '../data/filters'
 import { buildFilterString, ctxFilterSupported, applyOverlays } from '../render/filterRender'
 import { coverCrop } from '../lib/images'
-import { Slider } from './ui'
+import { Chip, ChipRow, PickerCard, Slider } from './ui'
 import type { RenderImage } from '../render/compose'
 import type { FilterPreset } from '../types'
 
@@ -67,60 +67,32 @@ export function FilterPicker({
 
   return (
     <div>
-      <div className="chip-row" role="tablist" aria-label="Filter categories">
+      <ChipRow label="Filter categories" role="tablist" className="py-1">
         {cats.map((c) => (
-          <button key={c} role="tab" aria-selected={category === c} className="chip" aria-pressed={category === c} onClick={() => setCategory(c)}>
+          <Chip key={c} role="tab" aria-selected={category === c} active={category === c} onClick={() => setCategory(c)}>
             {c}
-          </button>
+          </Chip>
         ))}
-      </div>
-      <div role="radiogroup" aria-label="Filter preset" style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, ${THUMB + 26}px)`, gap: 10, justifyContent: 'center', padding: '8px 0 16px' }}>
-        <button
-          role="radio"
-          aria-checked={selectedId === null}
-          className="picker-card"
-          onClick={() => onSelect(null)}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
-            alignItems: 'center',
-            padding: 6,
-            borderRadius: 12,
-            border: selectedId === null ? '2px solid var(--rose)' : '1px solid var(--line)',
-            background: selectedId === null ? 'var(--blush)' : 'var(--surface)',
-            cursor: 'pointer',
-          }}
-        >
-          <div style={{ width: THUMB, height: THUMB, borderRadius: 8, display: 'grid', placeItems: 'center', background: 'var(--surface-2)', color: 'var(--ink-soft)', fontSize: 11, fontWeight: 600 }}>
-            Original
-          </div>
-          <span style={{ fontSize: 11.5, fontWeight: 600 }}>None</span>
-        </button>
+      </ChipRow>
+      <div
+        role="radiogroup"
+        aria-label="Filter preset"
+        className="grid justify-center gap-2.5 py-2 pb-4"
+        style={{ gridTemplateColumns: `repeat(auto-fill, ${THUMB + 26}px)` }}
+      >
+        <PickerCard role="radio" aria-checked={selectedId === null} onClick={() => onSelect(null)} className="gap-1 p-1.5">
+          <div className="grid size-16 place-items-center rounded-lg bg-surface-2 text-[11px] font-semibold text-ink-soft">Original</div>
+          <span className="text-[11.5px] font-semibold">None</span>
+        </PickerCard>
         {list.map((f) => {
           const selected = f.id === selectedId
           return (
-            <button
-              key={f.id}
-              role="radio"
-              aria-checked={selected}
-              className="picker-card"
-              onClick={() => onSelect(f.id)}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 4,
-                alignItems: 'center',
-                padding: 6,
-                borderRadius: 12,
-                border: selected ? '2px solid var(--rose)' : '1px solid var(--line)',
-                background: selected ? 'var(--blush)' : 'var(--surface)',
-                cursor: 'pointer',
-              }}
-            >
+            <PickerCard key={f.id} role="radio" aria-checked={selected} onClick={() => onSelect(f.id)} className="gap-1 p-1.5">
               <FilterThumb preset={f} image={sampleImage} />
-              <span style={{ fontSize: 11.5, fontWeight: 600, color: selected ? 'var(--rose-deep)' : 'var(--ink)' }}>{f.name}</span>
-            </button>
+              <span className="text-[11.5px] font-semibold" style={{ color: selected ? 'var(--color-rose-deep)' : 'var(--color-ink)' }}>
+                {f.name}
+              </span>
+            </PickerCard>
           )
         })}
       </div>

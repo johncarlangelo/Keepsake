@@ -11,7 +11,7 @@ import { useEditor } from '../state/editor'
 import { useSettings } from '../state/settings'
 import { toast } from '../state/toast'
 import { navigate } from '../route'
-import { Button, Chip, ChipRow, ConfirmDialog, Modal, Sheet } from '../components/ui'
+import { Button, Chip, ChipRow, ConfirmDialog, Card, Modal, Sheet } from '../components/ui'
 import { Icon } from '../components/icons'
 import { TemplatePicker } from '../components/pickers'
 import { StripCanvas } from '../components/StripCanvas'
@@ -260,7 +260,7 @@ export function BoothScreen() {
 
   if (phase === 'review') {
     return (
-      <section aria-label="Review your photos" className="anim-enter">
+      <section aria-label="Review your photos" className="animate-enter">
         <ReviewView
           shots={shots}
           template={template}
@@ -286,19 +286,23 @@ export function BoothScreen() {
     ['classic-4', 'fourcut-kr', 'hero-4', 'single-polaroid', 'classic-6', 'filmstrip-4'].includes(t.id)
   )
   return (
-    <section className="anim-enter" aria-label="Keepsake photobooth">
-      <div className="booth-hero">
-        <div className="booth-hero-copy">
-          <h1>
+    <section className="animate-enter" aria-label="Keepsake photobooth">
+      <div className="grid items-center gap-6 pt-3 [grid-template-columns:minmax(0,1fr)] wide:gap-12 wide:[grid-template-columns:minmax(0,1.25fr)_minmax(0,0.75fr)]">
+        <div className="min-w-0">
+          <p className="mb-2 inline-flex items-center gap-2 rounded-[999px] border border-line bg-surface px-3 py-1 text-xs font-semibold tracking-wide text-ink-soft uppercase animate-enter">
+            <span className="inline-block size-1.5 rounded-full bg-sage" aria-hidden="true" />
+            Film photobooth · nothing uploaded
+          </p>
+          <h1 className="mb-3 text-[clamp(1.8rem,6vw,2.6rem)] animate-enter [animation-delay:60ms]">
             A film photobooth
             <br />
-            that <em className="script" style={{ color: 'var(--rose-deep)' }}>keeps</em> your moments.
+            that <em className="font-script text-rose-deep">keeps</em> your moments.
           </h1>
-          <p className="muted">
+          <p className="muted mb-5 max-w-prose animate-enter [animation-delay:120ms]">
             Take a strip, play with film filters and playful frames, and keep everything in Keepsake's own gallery — right on this
             device. Nothing is ever uploaded.
           </p>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', margin: '20px 0 8px' }}>
+          <div className="mb-2 flex flex-wrap gap-3 animate-enter [animation-delay:180ms]">
             <Button icon="camera" onClick={() => setShowExplainer(true)}>
               Start the Booth
             </Button>
@@ -307,7 +311,7 @@ export function BoothScreen() {
             </Button>
           </div>
           {storageNote ? (
-            <p className="tiny" style={{ color: 'var(--gold)', display: 'flex', gap: 6, alignItems: 'center', marginTop: 8 }} role="status">
+            <p role="status" className="mt-2 flex items-center gap-1.5 text-sm text-gold animate-enter [animation-delay:220ms]">
               <Icon name="info" size={16} /> {storageNote}
             </p>
           ) : null}
@@ -315,52 +319,56 @@ export function BoothScreen() {
         <HeroStrip />
       </div>
 
-      <div className="layout-picker">
-        <div className="layout-picker-controls">
-          <h2 style={{ margin: '0 0 8px', fontSize: '1.25rem' }}>Pick a layout</h2>
-          <p className="muted tiny">Tap a layout to preview it — change it anytime in the Studio.</p>
-          <ChipRow label="Quick layouts">
-            {quickTemplates.map((t) => (
-              <Chip key={t.id} active={t.id === templateId} onClick={() => selectTemplate(t.id)}>
-                {t.name} · {t.shots}
+      <Card className="mt-8 wide:mt-12">
+        <div className="grid items-start gap-6 [grid-template-columns:minmax(0,1fr)] wide:grid-cols-[minmax(0,1fr)_280px] wide:gap-8">
+          <div className="min-w-0">
+            <h2 className="mb-1 text-xl">Pick a layout</h2>
+            <p className="muted mb-3 text-sm">Tap a layout to preview it — change it anytime in the Studio.</p>
+            <ChipRow label="Quick layouts">
+              {quickTemplates.map((t) => (
+                <Chip key={t.id} active={t.id === templateId} onClick={() => selectTemplate(t.id)}>
+                  {t.name} · {t.shots}
+                </Chip>
+              ))}
+              <Chip onClick={() => setShowTemplates(true)}>
+                <Icon name="plus" size={14} /> All {TEMPLATES.length} layouts
               </Chip>
-            ))}
-            <Chip onClick={() => setShowTemplates(true)}>
-              <Icon name="plus" size={14} /> All {TEMPLATES.length} layouts
-            </Chip>
-          </ChipRow>
-          <p className="tiny muted" style={{ marginTop: 20 }}>Session settings</p>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Chip onClick={() => update({ countdown: settings.countdown === 0 ? 3 : settings.countdown === 3 ? 5 : 0 })}>
-              Countdown {settings.countdown === 0 ? 'off' : `${settings.countdown}s`}
-            </Chip>
-            <Chip onClick={() => update({ sound: !settings.sound })}>Sound {settings.sound ? 'on' : 'off'}</Chip>
-            <Chip onClick={() => update({ mirrorSave: !settings.mirrorSave })}>Mirror save {settings.mirrorSave ? 'on' : 'off'}</Chip>
+            </ChipRow>
+            <p className="muted mt-5 text-sm">Session settings</p>
+            <div className="flex flex-wrap gap-2">
+              <Chip onClick={() => update({ countdown: settings.countdown === 0 ? 3 : settings.countdown === 3 ? 5 : 0 })}>
+                Countdown {settings.countdown === 0 ? 'off' : `${settings.countdown}s`}
+              </Chip>
+              <Chip onClick={() => update({ sound: !settings.sound })}>Sound {settings.sound ? 'on' : 'off'}</Chip>
+              <Chip onClick={() => update({ mirrorSave: !settings.mirrorSave })}>Mirror save {settings.mirrorSave ? 'on' : 'off'}</Chip>
+            </div>
+          </div>
+          <div
+            aria-label={`Preview of ${template.name} layout`}
+            className="flex w-full flex-col animate-enter wide:sticky wide:top-[calc(var(--header-h)+24px)]"
+          >
+            <div key={templateId} className="animate-enter [&>div>div>canvas]:rounded-lg [&>div>div>canvas]:shadow-1">
+              <StripCanvas
+                comp={previewComp}
+                images={{}}
+                renderOpts={{ placeholder: 'sample', text: false }}
+                maxCanvasHeight={340}
+              />
+            </div>
+            <p className="muted mt-2.5 text-center text-sm">
+              {template.name} · {template.shots} {template.shots === 1 ? 'shot' : 'shots'}
+            </p>
           </div>
         </div>
-        <div className="card layout-preview" aria-label={`Preview of ${template.name} layout`}>
-          <div key={templateId} className="anim-enter">
-            <StripCanvas
-              comp={previewComp}
-              images={{}}
-              className="layout-preview-canvas"
-              renderOpts={{ placeholder: 'sample', text: false }}
-              maxCanvasHeight={340}
-            />
-          </div>
-          <p className="tiny muted" style={{ textAlign: 'center', marginTop: 10, marginBottom: 0 }}>
-            {template.name} · {template.shots} {template.shots === 1 ? 'shot' : 'shots'}
-          </p>
-        </div>
-      </div>
+      </Card>
 
       <Modal open={showExplainer} title="Turn on the camera?" onClose={() => setShowExplainer(false)}>
-        <ul style={{ margin: '0 0 16px', paddingLeft: 20, display: 'grid', gap: 8 }}>
+        <ul className="mb-4 grid list-disc gap-2 pl-5">
           <li>Your browser will ask for camera permission — footage never leaves this device.</li>
           <li>Every photo you take is saved automatically to Keepsake's in-app Gallery.</li>
           <li>Nothing is uploaded, and we never write to your device's photo library.</li>
         </ul>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+        <div className="flex justify-end gap-3">
           <Button variant="ghost" onClick={() => setShowExplainer(false)}>
             Not now
           </Button>
@@ -370,7 +378,11 @@ export function BoothScreen() {
         </div>
       </Modal>
 
-      <Sheet open={showTemplates} title="All layouts" onClose={() => setShowTemplates(false)}>
+      <Sheet
+        open={showTemplates}
+        title="All layouts"
+        onClose={() => setShowTemplates(false)}
+      >
         <TemplatePicker
           selectedId={templateId}
           onSelect={(id) => {
@@ -430,43 +442,31 @@ function LiveView(props: {
   const { videoRef, camState, countdown, flash, shotsTaken, templateName, templateShots, onShutter, onSwitch, canSwitch, onStop, onRetry } = props
   const err = camErrorMessage(camState)
   return (
-    <section aria-label="Live camera" className="anim-enter">
-      <div
-        style={{
-          position: 'relative',
-          background: 'var(--dark-bg)',
-          borderRadius: 'var(--r-md)',
-          overflow: 'hidden',
-          aspectRatio: '3 / 4',
-          maxHeight: '66dvh',
-          margin: '0 auto',
-          width: '100%',
-        }}
-      >
-        <video ref={videoRef} playsInline muted autoPlay style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }} />
+    <section aria-label="Live camera" className="animate-enter mx-auto max-w-2xl">
+      <div className="relative mx-auto aspect-[3/4] max-h-[66dvh] w-full overflow-hidden rounded-md bg-dark-bg shadow-2 ring-1 ring-dark-line/60">
+        <video ref={videoRef} playsInline muted autoPlay className="size-full -scale-x-100 object-cover" />
+        {/* film-frame corners over the feed */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-3 rounded-sm border border-white/15" />
         {flash ? (
-          <div style={{ position: 'absolute', inset: 0, background: 'var(--surface)', zIndex: 'var(--z-flash)', animation: 'ks-fade 260ms var(--ease-out) reverse both' }} />
+          <div className="absolute inset-0 z-[var(--z-flash)] bg-surface [animation:ks-fade_260ms_var(--ease-brand)_reverse_both]" />
         ) : null}
         {countdown !== null && countdown >= 0 ? (
           <div
             key={countdown}
-            className="anim-pop"
-            style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', zIndex: 30, pointerEvents: 'none' }}
+            className="pointer-events-none absolute inset-0 z-30 grid place-items-center animate-pop"
             aria-live="polite"
           >
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'min(28vw, 170px)', color: 'var(--surface)', textShadow: '0 4px 30px rgba(0,0,0,0.45)' }}>
+            <span className="font-display text-[min(28vw,170px)] font-bold text-surface drop-shadow-[0_4px_30px_rgba(0,0,0,0.45)]">
               {countdown === 0 ? '✦' : countdown}
             </span>
           </div>
         ) : null}
         {err ? (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 35, display: 'grid', placeItems: 'center', padding: 24, background: 'rgba(34,26,18,0.86)' }}>
-            <div role="alert" style={{ textAlign: 'center', color: 'var(--dark-text)', maxWidth: 360 }}>
-              <h3 style={{ marginBottom: 8 }}>{err.title}</h3>
-              <p className="tiny" style={{ opacity: 0.85, marginBottom: 16 }}>
-                {err.body}
-              </p>
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+          <div className="absolute inset-0 z-35 grid place-items-center bg-[rgba(34,26,18,0.86)] p-6">
+            <div role="alert" className="max-w-[360px] text-center text-dark-text">
+              <h3 className="mb-2">{err.title}</h3>
+              <p className="mb-4 text-sm opacity-85">{err.body}</p>
+              <div className="flex justify-center gap-2">
                 <Button size="sm" onClick={onRetry}>
                   Try again
                 </Button>
@@ -479,49 +479,58 @@ function LiveView(props: {
         ) : null}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 0 0' }}>
-        <button className="icon-btn" aria-label="End session" onClick={onStop}>
+      <div className="flex items-center gap-3 pt-4">
+        <button
+          aria-label="End session"
+          onClick={onStop}
+          className={[
+            'inline-flex size-11 items-center justify-center rounded-[999px] border border-line',
+            'bg-surface/85 text-ink-soft backdrop-blur transition-colors duration-150',
+            'hover:bg-surface hover:text-ink active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
+          ].join(' ')}
+        >
           <Icon name="close" />
         </button>
-        <div style={{ flex: 1, textAlign: 'center' }}>
-          <strong className="tiny" style={{ display: 'block' }}>
-            {templateName}
-          </strong>
+        <div className="flex-1 text-center">
+          <strong className="block text-sm">{templateName}</strong>
           {shotsTaken !== undefined ? (
-            <span className="tiny muted">
+            <span className="muted text-sm">
               {shotsTaken} / {templateShots} shots
             </span>
           ) : (
-            <span className="tiny muted">retaking one shot…</span>
+            <span className="muted text-sm">retaking one shot…</span>
           )}
         </div>
         {canSwitch ? (
-          <button className="icon-btn" aria-label="Switch camera" onClick={onSwitch}>
+          <button
+            aria-label="Switch camera"
+            onClick={onSwitch}
+            className={[
+              'inline-flex size-11 items-center justify-center rounded-[999px] border border-line',
+              'bg-surface/85 text-ink-soft backdrop-blur transition-colors duration-150',
+              'hover:bg-surface hover:text-ink active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
+            ].join(' ')}
+          >
             <Icon name="switch" />
           </button>
         ) : (
-          <span style={{ width: 44 }} />
+          <span className="w-11" />
         )}
       </div>
 
-      <div style={{ display: 'grid', placeItems: 'center', padding: '20px 0 8px' }}>
+      <div className="grid place-items-center py-5">
         <button
           onClick={onShutter}
           aria-label="Take photo"
           disabled={camState !== 'granted' || countdown !== null}
-          className={countdown !== null ? 'shutter shutter-pulse' : 'shutter'}
-          style={{
-            width: 76,
-            height: 76,
-            borderRadius: '50%',
-            border: '4px solid var(--rose)',
-            background: 'radial-gradient(circle at 50% 50%, var(--rose) 62%, var(--surface) 64%)',
-            boxShadow: 'var(--shadow-2)',
-            cursor: 'pointer',
-            transition: 'transform 100ms ease',
-          }}
-        />
-        <p className="tiny muted" style={{ marginTop: 10 }}>
+          className="group relative size-[76px] rounded-full border-4 border-rose shadow-2 transition-transform duration-100 active:scale-95 disabled:opacity-50"
+          style={{ background: 'radial-gradient(circle at 50% 50%, var(--color-rose) 62%, var(--color-surface) 64%)' }}
+        >
+          {countdown !== null ? (
+            <span aria-hidden="true" className="absolute -inset-1 animate-shutter-ring rounded-full border-[3px] border-rose" />
+          ) : null}
+        </button>
+        <p className="muted mt-2.5 text-sm">
           or press <kbd>Space</kbd>
         </p>
       </div>
@@ -547,29 +556,37 @@ function ReviewView({
   return (
     <div>
       <h2>Review your strip</h2>
-      <p className="muted tiny">All photos are already saved in your Gallery. Tap any photo to retake just that one.</p>
-      <div style={{ display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', margin: '16px 0 20px' }}>
+      <p className="muted text-sm">All photos are already saved in your Gallery. Tap any photo to retake just that one.</p>
+      <div className="my-4 grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2">
         {Array.from({ length: template.shots }).map((_, i) => {
           const shot = shots[i]
           return (
-            <div key={i} className={`card ${shot ? 'anim-develop' : ''}`} style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ position: 'relative', aspectRatio: shot ? `${shot.width} / ${shot.height}` : '4 / 3', background: 'var(--surface-2)' }}>
+            <div
+              key={i}
+              className={shot ? 'animate-develop overflow-hidden rounded-md border border-line bg-surface shadow-1' : 'overflow-hidden rounded-md border border-line bg-surface shadow-1'}
+            >
+              <div className="relative bg-surface-2" style={{ aspectRatio: shot ? `${shot.width} / ${shot.height}` : '4 / 3' }}>
                 {shot ? (
-                  <img src={shot.thumbUrl} alt={`Shot ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={shot.thumbUrl} alt={`Shot ${i + 1}`} className="size-full object-cover" />
                 ) : (
-                  <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }} className="muted tiny">
-                    empty
-                  </div>
+                  <div className="muted absolute inset-0 grid place-items-center text-sm">empty</div>
                 )}
               </div>
-              <button className="btn btn-ghost btn-sm" style={{ borderTop: '1px solid var(--line)', borderRadius: 0 }} onClick={() => onRetake(i)}>
+              <button
+                className={[
+                  'ghost flex w-full min-h-9 items-center justify-center gap-2 rounded-none px-4 text-sm font-semibold',
+                  'border-t border-line text-ink-soft transition-colors duration-150 hover:bg-surface-2 hover:text-ink',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
+                ].join(' ')}
+                onClick={() => onRetake(i)}
+              >
                 <Icon name="reset" size={16} /> Retake
               </button>
             </div>
           )
         })}
       </div>
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+      <div className="flex flex-wrap gap-2.5">
         <Button icon="wand" onClick={onCompose}>
           Compose in Studio
         </Button>
@@ -586,14 +603,26 @@ function ReviewView({
 
 function HeroStrip(): React.ReactNode {
   return (
-    <div className="hero-strip" aria-hidden="true">
-      <div className="hero-frame">
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="hero-photo" style={{ animationDelay: `${i * 0.7}s` }} />
-        ))}
-        <span className="script" style={{ textAlign: 'center', color: 'var(--ink-soft)', fontSize: 22 }}>
-          keepsake ✦
-        </span>
+    <div
+      aria-hidden="true"
+      className="flex justify-center [perspective:900px] animate-enter [animation-delay:120ms] wide:[transform:rotateX(4deg)]"
+    >
+      <div className="relative">
+        {/* back frame for depth */}
+        <div className="absolute inset-0 translate-x-3 translate-y-4 rotate-[-3deg] rounded-md border border-line bg-surface-2 shadow-2" />
+        <div className="relative flex w-[min(180px,36vw)] rotate-[3deg] flex-col gap-2 rounded-md border border-line bg-surface p-3 shadow-2 transition-transform duration-200 hover:rotate-[1deg]">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="animate-develop aspect-[16/10] rounded-[5px]"
+              style={{
+                background: 'linear-gradient(135deg, #d9b8a6 0%, #c98a8a 42%, #8a9b8a 78%, #6e5f4e 100%)',
+                animationDelay: `${i * 0.7}s`,
+              }}
+            />
+          ))}
+          <span className="text-center font-script text-[22px] text-ink-soft">keepsake ✦</span>
+        </div>
       </div>
     </div>
   )

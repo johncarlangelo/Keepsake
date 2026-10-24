@@ -5,7 +5,7 @@ import { emptyComposition } from '../render/compose'
 import { TEMPLATES } from '../data/templates'
 import { useEditor } from '../state/editor'
 import { navigate } from '../route'
-import { Button, Chip, ConfirmDialog, IconButton, Modal, Sheet } from '../components/ui'
+import { Button, Chip, ConfirmDialog, EmptyState, IconButton, Modal, Sheet } from '../components/ui'
 import { Icon } from '../components/icons'
 import { pooledUrl, revokeUrl } from '../lib/images'
 import { getPhoto } from '../lib/db'
@@ -46,9 +46,9 @@ export function GalleryScreen() {
   }
 
   return (
-    <section aria-label="Keepsake Gallery" className="anim-enter">
-      <div className="gallery-head">
-        <h1>Gallery</h1>
+    <section aria-label="Keepsake Gallery" className="animate-enter">
+      <div className="flex flex-wrap items-center gap-2">
+        <h1 className="mr-auto">Gallery</h1>
         <Chip onClick={() => setSelectMode(!selectMode)} active={selectMode}>
           {selectMode ? 'Cancel' : 'Select'}
         </Chip>
@@ -59,47 +59,45 @@ export function GalleryScreen() {
       <StorageMeterLine estimate={estimate} persisted={persisted} />
 
       {storageUnavailable ? (
-        <div className="card" role="alert" style={{ borderColor: 'var(--gold)' }}>
+        <div role="alert" className="rounded-md border border-gold bg-surface p-4 shadow-1">
           <strong>Gallery storage is unavailable</strong>
-          <p className="tiny muted" style={{ marginTop: 6 }}>
+          <p className="muted mt-1.5 text-sm">
             {loadError ?? 'This browser context (for example private browsing) does not allow local storage, so photos cannot be kept between visits.'}
           </p>
         </div>
       ) : null}
 
       {loading && entries.length === 0 ? (
-        <div className="gallery-grid" aria-busy="true" aria-label="Loading gallery">
+        <div aria-busy="true" aria-label="Loading gallery" className="grid min-w-0 gap-3 [grid-template-columns:repeat(auto-fill,minmax(104px,1fr))]">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="gallery-tile" style={{ opacity: 0.4, animation: 'ks-fade 1.2s ease-in-out infinite alternate' }} />
+            <div key={i} className="aspect-square rounded-md border border-line bg-surface-2 opacity-40 [animation:ks-fade_1.2s_ease-in-out_infinite_alternate]" />
           ))}
         </div>
       ) : entries.length === 0 ? (
-        <div className="empty-state">
+        <EmptyState>
           <svg viewBox="0 0 64 64" width="72" height="72" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
             <rect x="14" y="8" width="36" height="48" rx="4" />
             <circle cx="32" cy="30" r="9" />
             <path d="M24 46h16" />
           </svg>
           <h2>No photos yet</h2>
-          <p className="muted">
-            Photos you take in the booth appear here automatically — nothing to save, nothing uploaded.
-          </p>
+          <p className="muted">Photos you take in the booth appear here automatically — nothing to save, nothing uploaded.</p>
           <Button icon="camera" onClick={() => navigate('booth')}>
             Take your first strip
           </Button>
-        </div>
+        </EmptyState>
       ) : (
         <>
-          <section aria-label="Finished strips" style={{ marginBottom: 'var(--s6)' }}>
-            <h2 className="gallery-section-title">
-              Finished strips{strips.length > 0 ? <span className="muted tiny"> · {strips.length}</span> : null}
+          <section aria-label="Finished strips" className="mb-8">
+            <h2 className="mb-3 font-display text-[1.05rem] font-semibold">
+              Finished strips{strips.length > 0 ? <span className="muted text-sm font-normal"> · {strips.length}</span> : null}
             </h2>
             {strips.length === 0 ? (
-              <p className="muted tiny">
+              <p className="muted text-sm">
                 No finished strips yet — compose one in the Studio, then “Save strip to Gallery” from Export.
               </p>
             ) : (
-              <div className="gallery-grid gallery-grid--strips stagger">
+              <div className="stagger grid min-w-0 gap-3 [grid-template-columns:repeat(auto-fill,minmax(104px,1fr))]">
                 {strips.map((e) => (
                   <GalleryTile
                     key={e.id}
@@ -115,13 +113,13 @@ export function GalleryScreen() {
             )}
           </section>
           <section aria-label="Photos">
-            <h2 className="gallery-section-title">
-              Photos{captures.length > 0 ? <span className="muted tiny"> · {captures.length}</span> : null}
+            <h2 className="mb-3 font-display text-[1.05rem] font-semibold">
+              Photos{captures.length > 0 ? <span className="muted text-sm font-normal"> · {captures.length}</span> : null}
             </h2>
             {captures.length === 0 ? (
-              <p className="muted tiny">Photos you take in the booth appear here automatically.</p>
+              <p className="muted text-sm">Photos you take in the booth appear here automatically.</p>
             ) : (
-              <div className="gallery-grid stagger">
+              <div className="stagger grid min-w-0 gap-3 [grid-template-columns:repeat(auto-fill,minmax(104px,1fr))]">
                 {captures.map((e) => (
                   <GalleryTile
                     key={e.id}
@@ -140,9 +138,9 @@ export function GalleryScreen() {
       )}
 
       {selectMode && entries.length > 0 ? (
-        <div className="select-bar" style={{ marginTop: 16 }}>
-          <strong className="tiny">{selected.length} selected</strong>
-          <span style={{ flex: 1 }} />
+        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-md border border-line bg-surface p-3 shadow-1">
+          <strong className="text-sm">{selected.length} selected</strong>
+          <span className="flex-1" />
           <Button size="sm" icon="wand" onClick={createStrip} disabled={selected.length === 0}>
             Create strip
           </Button>
@@ -182,13 +180,13 @@ export function GalleryScreen() {
       />
 
       <Sheet open={showStorageInfo} title="Where your photos live" onClose={() => setShowStorageInfo(false)}>
-        <div style={{ display: 'grid', gap: 12 }} className="tiny">
+        <div className="grid gap-3 text-sm">
           <p className="muted">
             Keepsake stores photos <strong>only in this browser, on this device</strong> — using IndexedDB, not the cloud. There are no
             accounts and no backups.
           </p>
           <p className="muted">Things that can remove them:</p>
-          <ul className="muted" style={{ paddingLeft: 20, display: 'grid', gap: 6 }}>
+          <ul className="muted grid list-disc gap-1.5 pl-5">
             <li>Clearing site data / "Clear History and Website Data"</li>
             <li>Private or incognito windows (nothing persists)</li>
             <li>Browser storage eviction when the device is low on space</li>
@@ -206,14 +204,14 @@ export function GalleryScreen() {
 
 function StorageMeterLine({ estimate, persisted }: { estimate: { usage: number; quota: number } | null; persisted: boolean | null }) {
   if (!estimate || estimate.quota === 0) {
-    return <p className="tiny muted" style={{ marginBottom: 12 }}>Browser-local storage · size estimates unavailable</p>
+    return <p className="muted mb-3 text-sm">Browser-local storage · size estimates unavailable</p>
   }
   const pct = Math.min(100, (estimate.usage / estimate.quota) * 100)
-  const level = pct > 90 ? 'full' : pct > 65 ? 'high' : ''
+  const level = pct > 90 ? 'bg-danger' : pct > 65 ? 'bg-gold' : 'bg-sage'
   return (
-    <div className="storage-meter" style={{ marginBottom: 16, maxWidth: 420 }}>
-      <div className="bar" role="meter" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="Gallery storage used">
-        <i className={level} style={{ width: `${Math.max(2, pct)}%` }} />
+    <div className="mb-4 flex max-w-[420px] flex-col gap-1 text-[0.8125rem] text-ink-soft">
+      <div className="bar h-1.5 overflow-hidden rounded-full bg-surface-2" role="meter" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="Gallery storage used">
+        <i className={`block h-full rounded-full transition-[width] duration-200 ${level}`} style={{ width: `${Math.max(2, pct)}%` }} />
       </div>
       <span>
         {formatBytes(estimate.usage)} used of ~{formatBytes(estimate.quota)} available
@@ -240,7 +238,6 @@ function GalleryTile({
 }) {
   return (
     <button
-      className={variant === 'strip' ? 'gallery-tile gallery-tile--strip' : 'gallery-tile'}
       aria-pressed={selectMode ? selected : undefined}
       aria-label={
         selectMode
@@ -248,13 +245,22 @@ function GalleryTile({
           : `Open ${variant === 'strip' ? 'finished strip' : 'photo'} from ${new Date(entry.createdAt).toLocaleDateString()}`
       }
       onClick={selectMode ? onToggle : onOpen}
+      className={[
+        'group relative overflow-hidden rounded-md border border-line bg-surface-2 shadow-1',
+        'transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-0.5 hover:shadow-2',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+        'aria-pressed:border-rose-deep aria-pressed:ring-2 aria-pressed:ring-rose-deep',
+        variant === 'strip'
+          ? 'h-[210px] wide:h-[250px] [&>img]:h-full [&>img]:object-contain [&>img]:p-2'
+          : 'aspect-square [&>img]:h-full [&>img]:w-full [&>img]:object-cover',
+      ].join(' ')}
     >
       {entry.corrupt || !entry.thumbUrl ? (
-        <span className="tiny muted" style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+        <span className="muted grid h-full place-items-center text-sm">
           <Icon name="info" size={20} />
         </span>
       ) : (
-        <img src={entry.thumbUrl} alt="" loading="lazy" />
+        <img src={entry.thumbUrl} alt="" loading="lazy" className="w-full" />
       )}
     </button>
   )
@@ -283,18 +289,22 @@ function GalleryDetail({ entry, onClose, onDelete }: { entry: GalleryEntry | nul
   if (!entry) return null
   return (
     <Modal open={!!entry} title={entry.kind === 'strip' ? 'Saved strip' : 'Photo'} onClose={onClose}>
-      <div className="gallery-detail">
-        {fullUrl ? <img src={fullUrl} alt={entry.label ?? 'Gallery photo'} /> : <div style={{ height: 200, display: 'grid', placeItems: 'center' }} className="muted tiny">Loading…</div>}
-        <p className="mono muted" style={{ textAlign: 'center' }}>
+      <div className="flex flex-col items-center gap-3">
+        {fullUrl ? (
+          <img src={fullUrl} alt={entry.label ?? 'Gallery photo'} className="max-h-[52dvh] w-auto rounded-sm object-contain" />
+        ) : (
+          <div className="muted grid h-50 place-items-center text-sm">Loading…</div>
+        )}
+        <p className="muted text-center font-mono text-[0.8125rem]">
           {new Date(entry.createdAt).toLocaleString()} · {entry.width}×{entry.height} · {formatBytes(entry.bytes)}
           {entry.label ? ` · ${entry.label}` : ''}
         </p>
         {entry.corrupt ? (
-          <p className="tiny" style={{ color: 'var(--danger)' }} role="alert">
+          <p role="alert" className="text-sm text-danger">
             This record looks damaged — the image data may be missing.
           </p>
         ) : null}
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginTop: 8 }}>
+        <div className="mt-1 flex flex-wrap justify-center gap-2">
           {fullUrl ? (
             <Button size="sm" variant="secondary" icon="download" onClick={() => void downloadFromUrl(fullUrl!, entry)}>
               Download original

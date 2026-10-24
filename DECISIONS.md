@@ -293,3 +293,29 @@ against the no-runtime-weight posture).
 **Consequences:** New devDependency (`tailwindcss` + `@tailwindcss/vite`); class-based styling is
 now the norm for new code; existing `src/styles/*.css` shrinks to tokens + a few global rules
 (keyframes, canvas-specific selectors) as screens migrate.
+
+## D-029 · 2026-10-25 · Full Tailwind migration + shadcn-pattern redesign (completes D-028)
+**Context:** Owner: "use the popular react tailwind components in the internet, redesign the ui ux
+layouts, all of them. dont make it basic." The most popular React+Tailwind component pattern is the
+shadcn/ui architecture (Radix primitives + cva variants + a class-merge helper) — already half in
+place since D-024 (Radix Dialog/Slider).
+**Decision:** Adopted shadcn-pattern architecture across the kit and redesigned every screen:
+- `src/lib/cn.ts` — clsx + tailwind-merge class-merge helper (`cn()`).
+- `ui.tsx` rebuilt on **class-variance-authority** (`buttonVariants`, chip/icon/picker variants);
+  Radix **Tabs** (@radix-ui/react-tabs) replaces the hand-rolled tab row in the Studio (keyboard
+  arrow navigation, roving tabindex for free); Button gains `outline` variant; LabeledIconButton
+  for the toolbar.
+- `src/styles/theme.css` is the **only stylesheet**: Tailwind v4 `@theme` carries the full Analog
+  Heartbreak token contract (colors → utilities like `bg-surface`/`text-ink-soft`, radii, warm
+  shadows, easing, brand keyframes as `--animate-*`); `wide:` breakpoint = the audited 900px.
+  tokens/base/ui/screens.css deleted.
+- Redesigns: App shell (motion layout-id pill on desktop nav, underline indicator on mobile
+  tabbar), Booth (layered hero with back-frame depth, badge, sticky preview card, film-frame
+  corners on the live view), Studio (same D-027 three-band containment, restyled), Gallery
+  (cards, hover lift, storage meter), pickers/filter/decorations on shared PickerCard.
+**Verified:** typecheck/lint/54 tests/build green; in-browser re-audit at 375/853/1093/1280/1440
+unscrolled + scrolled — toolbar, all five tab pills in-viewport & hittable, canvas|panel geometry
+exact, strip never clipped, no horizontal overflow; all tabs click through (Radix); bundles
+162 KB gz JS (+14 from cva/tw-merge/tabs) + 9.8 KB gz CSS (−2) — well under the 250 KB budget.
+**Consequences:** new code styles with utilities referencing `@theme` tokens only; `muted` is the
+one component-layer text helper; disabled buttons are pointer-events:none (shadcn default).

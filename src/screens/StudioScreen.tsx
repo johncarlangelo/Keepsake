@@ -7,7 +7,7 @@ import { useRenderImages, StripCanvas } from '../components/StripCanvas'
 import { TemplatePicker, FramePicker } from '../components/pickers'
 import { FilterPicker } from '../components/FilterPicker'
 import { StickerTray, TextPanel } from '../components/decorations'
-import { Button, Chip, ConfirmDialog, Segmented, Sheet, Slider } from '../components/ui'
+import { Button, Chip, ConfirmDialog, LabeledIconButton, Segmented, Sheet, Slider, Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui'
 import { Icon } from '../components/icons'
 import { getTemplate } from '../data/templates'
 import { getFrame } from '../data/frames'
@@ -18,14 +18,15 @@ import { makeThumb } from '../lib/images'
 import { newId, putPhoto } from '../lib/db'
 import { navigate } from '../route'
 import { toast } from '../state/toast'
+import type { ToolTab } from '../state/editor'
 
-const TABS = [
+const TABS: Array<{ id: ToolTab; label: string; icon: Parameters<typeof Icon>[0]['name'] }> = [
   { id: 'layout', label: 'Layout', icon: 'layout' },
   { id: 'filter', label: 'Filter', icon: 'sliders' },
   { id: 'frame', label: 'Frame', icon: 'frame' },
   { id: 'text', label: 'Text', icon: 'text' },
   { id: 'stickers', label: 'Stickers', icon: 'sticker' },
-] as const
+]
 
 export function StudioScreen() {
   const editor = useEditor()
@@ -81,11 +82,11 @@ export function StudioScreen() {
 
   if (!comp) {
     return (
-      <section className="empty-state anim-enter" aria-label="Studio is empty">
+      <section className="flex flex-col items-center gap-3 px-4 py-12 text-center text-ink-soft animate-enter" aria-label="Studio is empty">
         <Icon name="wand" size={72} />
-        <h2>Nothing in the Studio yet</h2>
+        <h2 className="text-ink">Nothing in the Studio yet</h2>
         <p className="muted">Take photos in the Booth or pick some from your Gallery to start a strip.</p>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div className="flex flex-wrap justify-center gap-3">
           <Button icon="camera" onClick={() => navigate('booth')}>
             Go to Booth
           </Button>
@@ -100,7 +101,7 @@ export function StudioScreen() {
   const template = getTemplate(comp.templateId)
   const frame = getFrame(comp.frameId)
   const selectedSlotEdit = selectedSlot !== null ? comp.slots[selectedSlot] : undefined
-  const tabs = selectedSlot !== null ? [...TABS, { id: 'adjust' as const, label: 'Adjust', icon: 'sliders' as const }] : TABS
+  const tabs = selectedSlot !== null ? [...TABS, { id: 'adjust' as ToolTab, label: 'Adjust', icon: 'sliders' as const }] : TABS
 
   const onSlotTap = (i: number | null) => {
     editor.selectSlot(i)
@@ -149,194 +150,195 @@ export function StudioScreen() {
   }
 
   return (
-    <section className="studio anim-enter" aria-label="Strip studio">
-      <div className="studio-top">
-        <div className="studio-toolbar">
-          <Button variant="ghost" size="sm" icon="undo" onClick={() => editor.undo()} disabled={editor.past.length === 0} aria-label="Undo (Ctrl+Z)">
-            <span className="btn-label">Undo</span>
-          </Button>
-          <Button variant="ghost" size="sm" icon="redo" onClick={() => editor.redo()} disabled={editor.future.length === 0} aria-label="Redo (Ctrl+Shift+Z)">
-            <span className="btn-label">Redo</span>
-          </Button>
-          <Button variant="ghost" size="sm" icon="reset" onClick={() => setConfirmReset(true)} aria-label="Reset edits">
-            <span className="btn-label">Reset</span>
-          </Button>
-          <span className="tiny muted" style={{ marginLeft: 4 }}>
+    /* D-027 three-band structure — the containment contract must hold:
+       sticky top band (toolbar+tabs), body grid canvas|panel, per-pane containment. */
+    <Tabs
+      value={toolTab}
+      onValueChange={(v) => editor.setToolTab(v as Parameters<typeof editor.setToolTab>[0])}
+      className="flex min-w-0 flex-col gap-4"
+    >
+      <div className="sticky top-[calc(var(--header-h)+env(safe-area-inset-top,0px))] z-5 flex flex-col gap-3 bg-bg py-2">
+        <div className="flex min-h-11 flex-wrap items-center gap-2">
+          <LabeledIconButton icon="undo" label="Undo (Ctrl+Z)" onClick={() => editor.undo()} disabled={editor.past.length === 0}>
+            Undo
+          </LabeledIconButton>
+          <LabeledIconButton icon="redo" label="Redo (Ctrl+Shift+Z)" onClick={() => editor.redo()} disabled={editor.future.length === 0}>
+            Redo
+          </LabeledIconButton>
+          <LabeledIconButton icon="reset" label="Reset edits" onClick={() => setConfirmReset(true)}>
+            Reset
+          </LabeledIconButton>
+          <span className="muted ml-1 text-sm">
             {template.name} · {frame.name}
           </span>
-          <span style={{ flex: 1 }} />
+          <span className="flex-1" />
           <Button icon="download" onClick={() => setShowExport(true)}>
             Export
           </Button>
         </div>
 
-        <div className="studio-tabs" role="tablist" aria-label="Edit tools">
+        <TabsList aria-label="Edit tools">
           {tabs.map((t) => (
-            <button key={t.id} role="tab" aria-selected={toolTab === t.id} className="studio-tab" onClick={() => editor.setToolTab(t.id)}>
+            <TabsTrigger key={t.id} value={t.id}>
               <Icon name={t.icon} size={16} /> {t.label}
-            </button>
+            </TabsTrigger>
           ))}
-        </div>
+        </TabsList>
       </div>
 
-      <div className="studio-body">
-        <div className="studio-canvas-area" key={`${comp.templateId}:${comp.frameId}`}>
+      <div className="grid min-w-0 items-start gap-4 [grid-template-columns:minmax(0,1fr)] wide:grid-cols-[minmax(0,1fr)_380px]">
+        {/* StripCanvas measures its box: the pane carries its own definite height
+            and clips overflow — nothing can ever paint over a sibling (D-027). */}
+        <div
+          key={`${comp.templateId}:${comp.frameId}`}
+          className="flex h-[clamp(300px,52dvh,560px)] min-w-0 justify-center overflow-hidden wide:h-[clamp(420px,calc(100dvh-330px),760px)]"
+        >
           <StripCanvas comp={comp} images={images} interactive onSlotTap={onSlotTap} />
         </div>
 
-        <div className="studio-panel" role="tabpanel">
-          {toolTab === 'layout' ? (
-            <div>
-              <p className="tiny muted" style={{ marginBottom: 10 }}>
-                Switching layouts keeps your photos in reading order.
-              </p>
-              <TemplatePicker selectedId={comp.templateId} onSelect={editor.setTemplate} images={images} />
-            </div>
-          ) : null}
+        <div className="min-w-0 rounded-md border border-line bg-surface p-4 shadow-1 wide:max-h-[calc(100dvh-220px)] wide:overflow-y-auto">
+          <TabsContent value="layout">
+            <p className="muted mb-2.5 text-sm">Switching layouts keeps your photos in reading order.</p>
+            <TemplatePicker selectedId={comp.templateId} onSelect={editor.setTemplate} images={images} />
+          </TabsContent>
 
-          {toolTab === 'filter' ? (
-            <div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10, flexWrap: 'wrap' }}>
-                <span className="tiny muted">
-                  {editor.applyToAll || selectedSlot === null ? 'Whole strip' : `Slot ${selectedSlot + 1}`}
-                </span>
-                <span style={{ flex: 1 }} />
-                <Chip active={editor.applyToAll} onClick={() => editor.setApplyToAll(!editor.applyToAll)}>
-                  Apply to all photos
-                </Chip>
-              </div>
-              {selectedSlot === null && !editor.applyToAll ? (
-                <p className="tiny muted" style={{ marginBottom: 8 }}>
-                  Tip: tap a photo on the strip to filter just that one.
-                </p>
-              ) : null}
-              <FilterPicker
-                selectedId={editor.applyToAll || selectedSlot === null ? comp.slots.find((s) => s.filterId)?.filterId ?? null : selectedSlotEdit?.filterId ?? null}
-                intensity={
-                  editor.applyToAll || selectedSlot === null
-                    ? comp.slots.find((s) => s.filterId)?.intensity ?? 1
-                    : selectedSlotEdit?.intensity ?? 1
+          <TabsContent value="filter">
+            <div className="mb-2.5 flex flex-wrap items-center gap-2">
+              <span className="muted text-sm">
+                {editor.applyToAll || selectedSlot === null ? 'Whole strip' : `Slot ${selectedSlot + 1}`}
+              </span>
+              <span className="flex-1" />
+              <Chip active={editor.applyToAll} onClick={() => editor.setApplyToAll(!editor.applyToAll)}>
+                Apply to all photos
+              </Chip>
+            </div>
+            {selectedSlot === null && !editor.applyToAll ? (
+              <p className="muted mb-2 text-sm">Tip: tap a photo on the strip to filter just that one.</p>
+            ) : null}
+            <FilterPicker
+              selectedId={editor.applyToAll || selectedSlot === null ? comp.slots.find((s) => s.filterId)?.filterId ?? null : selectedSlotEdit?.filterId ?? null}
+              intensity={
+                editor.applyToAll || selectedSlot === null
+                  ? comp.slots.find((s) => s.filterId)?.intensity ?? 1
+                  : selectedSlotEdit?.intensity ?? 1
+              }
+              onSelect={(id) => {
+                if (editor.applyToAll || selectedSlot === null) editor.applyFilterToAll(id)
+                else editor.setSlotFilter(selectedSlot, id)
+              }}
+              onIntensity={(v) => {
+                if (!useEditor.getState().interacting) editor.beginInteraction()
+                if (editor.applyToAll || selectedSlot === null) {
+                  for (let i = 0; i < comp.slots.length; i++) editor.setSlotIntensity(i, v)
+                } else if (selectedSlot !== null) {
+                  editor.setSlotIntensity(selectedSlot, v)
                 }
-                onSelect={(id) => {
-                  if (editor.applyToAll || selectedSlot === null) editor.applyFilterToAll(id)
-                  else editor.setSlotFilter(selectedSlot, id)
-                }}
-                onIntensity={(v) => {
-                  if (!useEditor.getState().interacting) editor.beginInteraction()
-                  if (editor.applyToAll || selectedSlot === null) {
-                    for (let i = 0; i < comp.slots.length; i++) editor.setSlotIntensity(i, v)
-                  } else if (selectedSlot !== null) {
-                    editor.setSlotIntensity(selectedSlot, v)
-                  }
-                }}
-                onIntensityCommit={endInteraction}
-                sampleImage={sampleImage}
-              />
-            </div>
-          ) : null}
+              }}
+              onIntensityCommit={endInteraction}
+              sampleImage={sampleImage}
+            />
+          </TabsContent>
 
-          {toolTab === 'frame' ? (
-            <div>
-              <FramePicker selectedId={comp.frameId} onSelect={editor.setFrame} templateId={comp.templateId} images={images} />
-              {frame.customColor ? (
-                <div style={{ marginTop: 14 }}>
-                  <span className="tiny muted">Frame color</span>
-                  <div className="chip-row" role="group" aria-label="Frame color">
-                    {['#F4E3DC', '#F7F1E5', '#FFFFFF', '#2B2118', '#EAF4F4', '#FBEFF2', '#E8E8F2', '#F3EFE6'].map((c) => (
-                      <Chip key={c} active={comp.frameColor === c} onClick={() => editor.setCustomColor(c)} aria-label={`Frame color ${c}`}>
-                        <span style={{ width: 22, height: 22, borderRadius: '50%', background: c, border: '1px solid rgba(0,0,0,0.15)', display: 'inline-block' }} />
-                      </Chip>
-                    ))}
-                    {comp.frameColor ? (
-                      <Chip onClick={() => editor.setCustomColor(undefined)}>Reset</Chip>
-                    ) : null}
-                  </div>
+          <TabsContent value="frame">
+            <FramePicker selectedId={comp.frameId} onSelect={editor.setFrame} templateId={comp.templateId} images={images} />
+            {frame.customColor ? (
+              <div className="mt-3.5">
+                <span className="muted text-sm">Frame color</span>
+                <div role="group" aria-label="Frame color" className="flex flex-wrap gap-2 py-1">
+                  {['#F4E3DC', '#F7F1E5', '#FFFFFF', '#2B2118', '#EAF4F4', '#FBEFF2', '#E8E8F2', '#F3EFE6'].map((c) => (
+                    <Chip key={c} active={comp.frameColor === c} onClick={() => editor.setCustomColor(c)} aria-label={`Frame color ${c}`}>
+                      <span className="inline-block size-[22px] rounded-full border border-black/15" style={{ background: c }} />
+                    </Chip>
+                  ))}
+                  {comp.frameColor ? <Chip onClick={() => editor.setCustomColor(undefined)}>Reset</Chip> : null}
                 </div>
-              ) : null}
-            </div>
-          ) : null}
+              </div>
+            ) : null}
+          </TabsContent>
 
-          {toolTab === 'text' ? (
-            <div onFocusCapture={() => { if (!useEditor.getState().interacting) editor.beginInteraction() }} onBlurCapture={endInteraction}>
-              <TextPanel text={comp.text} onChange={(patch) => editor.setText(patch)} />
-            </div>
-          ) : null}
+          <TabsContent value="text" onFocusCapture={() => { if (!useEditor.getState().interacting) editor.beginInteraction() }} onBlurCapture={endInteraction}>
+            <TextPanel text={comp.text} onChange={(patch) => editor.setText(patch)} />
+          </TabsContent>
 
-          {toolTab === 'stickers' ? <StickerTray /> : null}
+          <TabsContent value="stickers">
+            <StickerTray />
+          </TabsContent>
 
-          {toolTab === 'adjust' && selectedSlot !== null && selectedSlotEdit ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <strong className="tiny">Photo slot {selectedSlot + 1}</strong>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Button size="sm" variant="secondary" icon="gallery" onClick={() => { setPickerSlot(selectedSlot); setShowPicker(true) }}>
-                  Replace
-                </Button>
-                <Button size="sm" variant="ghost" icon="switch" onClick={() => editor.toggleFlip(selectedSlot)}>
-                  Flip
-                </Button>
-                {selectedSlotEdit.photoId ? (
-                  <Button size="sm" variant="danger" icon="trash" onClick={() => editor.setSlotPhoto(selectedSlot, null)}>
-                    Clear
+          <TabsContent value="adjust">
+            {selectedSlot !== null && selectedSlotEdit ? (
+              <div className="flex flex-col gap-3.5">
+                <strong className="text-sm">Photo slot {selectedSlot + 1}</strong>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="secondary" icon="gallery" onClick={() => { setPickerSlot(selectedSlot); setShowPicker(true) }}>
+                    Replace
                   </Button>
-                ) : null}
+                  <Button size="sm" variant="ghost" icon="switch" onClick={() => editor.toggleFlip(selectedSlot)}>
+                    Flip
+                  </Button>
+                  {selectedSlotEdit.photoId ? (
+                    <Button size="sm" variant="danger" icon="trash" onClick={() => editor.setSlotPhoto(selectedSlot, null)}>
+                      Clear
+                    </Button>
+                  ) : null}
+                </div>
+                {selectedSlotEdit.photoId ? (
+                  <>
+                    <Slider
+                      label="Zoom"
+                      value={selectedSlotEdit.crop.zoom}
+                      min={1}
+                      max={3}
+                      step={0.05}
+                      onChange={(v) => {
+                        if (!useEditor.getState().interacting) editor.beginInteraction()
+                        editor.setSlotCrop(selectedSlot, { ...selectedSlotEdit.crop, zoom: v })
+                      }}
+                      onCommit={endInteraction}
+                      format={(v) => `${v.toFixed(2)}×`}
+                    />
+                    <Slider
+                      label="Pan ↕"
+                      value={selectedSlotEdit.crop.y}
+                      min={-0.5}
+                      max={0.5}
+                      step={0.02}
+                      onChange={(v) => {
+                        if (!useEditor.getState().interacting) editor.beginInteraction()
+                        editor.setSlotCrop(selectedSlot, { ...selectedSlotEdit.crop, y: v })
+                      }}
+                      onCommit={endInteraction}
+                      format={(v) => v.toFixed(2)}
+                    />
+                    <Slider
+                      label="Pan ↔"
+                      value={selectedSlotEdit.crop.x}
+                      min={-0.5}
+                      max={0.5}
+                      step={0.02}
+                      onChange={(v) => {
+                        if (!useEditor.getState().interacting) editor.beginInteraction()
+                        editor.setSlotCrop(selectedSlot, { ...selectedSlotEdit.crop, x: v })
+                      }}
+                      onCommit={endInteraction}
+                      format={(v) => v.toFixed(2)}
+                    />
+                  </>
+                ) : (
+                  <p className="muted text-sm">This slot is empty — pick a photo to adjust it.</p>
+                )}
+                <hr className="my-2 border-0 border-t border-line" />
+                <span className="muted text-sm">Order</span>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="secondary" icon="arrowLeft" onClick={() => editor.moveSlot(selectedSlot, Math.max(0, selectedSlot - 1))}>
+                    Move up
+                  </Button>
+                  <Button size="sm" variant="secondary" icon="arrowRight" onClick={() => editor.moveSlot(selectedSlot, Math.min(comp.slots.length - 1, selectedSlot + 1))}>
+                    Move down
+                  </Button>
+                </div>
               </div>
-              {selectedSlotEdit.photoId ? (
-                <>
-                  <Slider
-                    label="Zoom"
-                    value={selectedSlotEdit.crop.zoom}
-                    min={1}
-                    max={3}
-                    step={0.05}
-                    onChange={(v) => {
-                      if (!useEditor.getState().interacting) editor.beginInteraction()
-                      editor.setSlotCrop(selectedSlot, { ...selectedSlotEdit.crop, zoom: v })
-                    }}
-                    onCommit={endInteraction}
-                    format={(v) => `${v.toFixed(2)}×`}
-                  />
-                  <Slider
-                    label="Pan ↕"
-                    value={selectedSlotEdit.crop.y}
-                    min={-0.5}
-                    max={0.5}
-                    step={0.02}
-                    onChange={(v) => {
-                      if (!useEditor.getState().interacting) editor.beginInteraction()
-                      editor.setSlotCrop(selectedSlot, { ...selectedSlotEdit.crop, y: v })
-                    }}
-                    onCommit={endInteraction}
-                    format={(v) => v.toFixed(2)}
-                  />
-                  <Slider
-                    label="Pan ↔"
-                    value={selectedSlotEdit.crop.x}
-                    min={-0.5}
-                    max={0.5}
-                    step={0.02}
-                    onChange={(v) => {
-                      if (!useEditor.getState().interacting) editor.beginInteraction()
-                      editor.setSlotCrop(selectedSlot, { ...selectedSlotEdit.crop, x: v })
-                    }}
-                    onCommit={endInteraction}
-                    format={(v) => v.toFixed(2)}
-                  />
-                </>
-              ) : (
-                <p className="tiny muted">This slot is empty — pick a photo to adjust it.</p>
-              )}
-              <hr className="divider" />
-              <span className="tiny muted">Order</span>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <Button size="sm" variant="secondary" icon="arrowLeft" onClick={() => editor.moveSlot(selectedSlot, Math.max(0, selectedSlot - 1))}>
-                  Move up
-                </Button>
-                <Button size="sm" variant="secondary" icon="arrowRight" onClick={() => editor.moveSlot(selectedSlot, Math.min(comp.slots.length - 1, selectedSlot + 1))}>
-                  Move down
-                </Button>
-              </div>
-            </div>
-          ) : null}
+            ) : null}
+          </TabsContent>
         </div>
       </div>
 
@@ -352,11 +354,11 @@ export function StudioScreen() {
 
       {/* export */}
       <Sheet open={showExport} title="Export your keepsake" onClose={() => setShowExport(false)}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, height: 320 }}>
+        <div className="mb-3 flex h-80 justify-center">
           <StripCanvas comp={comp} images={images} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
-          <span className="tiny muted">Quality</span>
+        <div className="mb-3.5 flex flex-wrap items-center gap-3">
+          <span className="muted text-sm">Quality</span>
           <Segmented
             label="Export quality"
             value={String(settings.exportScale)}
@@ -366,9 +368,9 @@ export function StudioScreen() {
               { value: '3', label: `${template.canvas.w * 3}w` },
             ]}
           />
-          <span className="tiny muted">PNG</span>
+          <span className="muted text-sm">PNG</span>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="flex flex-col gap-2">
           {canShareFiles() ? (
             <Button icon="share" disabled={exporting} onClick={() => void runExport('share')}>
               Share…
@@ -381,9 +383,7 @@ export function StudioScreen() {
             Save strip to Gallery
           </Button>
         </div>
-        <p className="tiny muted" style={{ marginTop: 12 }}>
-          {platformSaveHint(navigator.userAgent)}
-        </p>
+        <p className="muted mt-3 text-sm">{platformSaveHint(navigator.userAgent)}</p>
       </Sheet>
 
       <ConfirmDialog
@@ -394,7 +394,7 @@ export function StudioScreen() {
         onConfirm={() => editor.reset()}
         onCancel={() => setConfirmReset(false)}
       />
-    </section>
+    </Tabs>
   )
 }
 
@@ -408,13 +408,18 @@ function PhotoPicker({ onPick }: { onPick: (photoId: string) => void }) {
   }, [entries.length, refresh])
   const captures = entries.filter((e) => e.kind === 'capture' && !e.corrupt)
   if (captures.length === 0) {
-    return <p className="muted tiny">No photos in your Gallery yet — take some in the Booth first.</p>
+    return <p className="muted text-sm">No photos in your Gallery yet — take some in the Booth first.</p>
   }
   return (
-    <div className="gallery-grid">
+    <div className="grid gap-3 min-w-0 [grid-template-columns:repeat(auto-fill,minmax(104px,1fr))]">
       {captures.map((e) => (
-        <button key={e.id} className="gallery-tile" aria-label={`Use photo from ${new Date(e.createdAt).toLocaleString()}`} onClick={() => onPick(e.id)}>
-          {e.thumbUrl ? <img src={e.thumbUrl} alt="" /> : null}
+        <button
+          key={e.id}
+          aria-label={`Use photo from ${new Date(e.createdAt).toLocaleString()}`}
+          onClick={() => onPick(e.id)}
+          className="overflow-hidden rounded-md border border-line bg-surface-2 shadow-1 transition-transform duration-150 hover:-translate-y-0.5"
+        >
+          {e.thumbUrl ? <img src={e.thumbUrl} alt="" className="aspect-square w-full object-cover" /> : null}
         </button>
       ))}
     </div>
