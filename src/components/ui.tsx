@@ -1,70 +1,185 @@
-/** Core UI kit: Button, IconButton, Chip, Radix-backed Slider/Sheet/Modal, Confirm, Toasts (Motion), Segmented. */
+/**
+ * Core UI kit on Tailwind + cva (shadcn pattern, D-028/D-029). Radix owns
+ * behavior (focus trap, arrow keys, scroll lock); utilities own the look.
+ */
 import { type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import * as Dialog from '@radix-ui/react-dialog'
+import * as TabsPrimitive from '@radix-ui/react-tabs'
 import * as SliderPrimitive from '@radix-ui/react-slider'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { AnimatePresence, motion } from 'motion/react'
+import { cn } from '../lib/cn'
 import type { IconName } from './icons'
 import { Icon } from './icons'
 import { useToasts } from '../state/toast'
 
-/* ---------- buttons ---------- */
+/* ---------- button ---------- */
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
+const buttonVariants = cva(
+  [
+    'inline-flex select-none items-center justify-center gap-2 rounded-[999px]',
+    'font-semibold leading-none transition-[background-color,border-color,color,transform] duration-150',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+    'active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100',
+    '[-webkit-tap-highlight-color:transparent]',
+  ].join(' '),
+  {
+    variants: {
+      variant: {
+        primary: 'bg-rose-deep text-white shadow-1 hover:bg-rose-ink',
+        secondary: 'border-2 border-ink bg-surface text-ink hover:bg-surface-2',
+        outline: 'border border-line bg-transparent text-ink hover:border-ink/30 hover:bg-surface-2',
+        ghost: 'bg-transparent text-ink-soft hover:bg-surface-2 hover:text-ink',
+        danger: 'border-2 border-danger/70 bg-transparent text-danger hover:bg-danger/10',
+      },
+      size: {
+        default: 'min-h-11 px-6 text-base',
+        sm: 'min-h-9 px-4 text-sm',
+      },
+    },
+    defaultVariants: { variant: 'primary', size: 'default' },
+  }
+)
 
 export function Button({
-  variant = 'primary',
+  variant,
   size,
   icon,
   children,
-  className = '',
+  className,
   ...rest
 }: {
-  variant?: ButtonVariant
-  size?: 'sm'
+  variant?: VariantProps<typeof buttonVariants>['variant']
+  size?: VariantProps<typeof buttonVariants>['size']
   icon?: IconName
   children?: ReactNode
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button className={`btn btn-${variant} ${size === 'sm' ? 'btn-sm' : ''} ${className}`} {...rest}>
+    <button className={cn(buttonVariants({ variant, size }), className)} {...rest}>
       {icon ? <Icon name={icon} size={size === 'sm' ? 18 : 20} /> : null}
       {children}
     </button>
   )
 }
 
+const iconButtonVariants = cva(
+  [
+    'inline-flex size-11 select-none items-center justify-center rounded-[999px] border border-line',
+    'bg-surface/85 text-ink-soft backdrop-blur-lg',
+    'transition-[background-color,color,transform] duration-150',
+    'hover:bg-surface hover:text-ink active:scale-[0.94] disabled:pointer-events-none disabled:opacity-50',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+    '[&>svg]:size-[22px]',
+  ].join(' '),
+  { variants: { tone: { plain: 'border-transparent bg-transparent backdrop-blur-none' } }, defaultVariants: {} }
+)
+
 export function IconButton({
   icon,
   label,
-  className = '',
+  tone,
+  className,
   ...rest
-}: { icon: IconName; label: string } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+}: {
+  icon: IconName
+  label: string
+  tone?: VariantProps<typeof iconButtonVariants>['tone']
+} & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button className={`icon-btn ${className}`} aria-label={label} title={label} {...rest}>
+    <button className={cn(iconButtonVariants({ tone }), className)} aria-label={label} title={label} {...rest}>
       <Icon name={icon} />
+    </button>
+  )
+}
+
+/** Toolbar icon-button with a text label that appears on roomier screens. */
+export function LabeledIconButton({
+  icon,
+  label,
+  className,
+  children,
+  ...rest
+}: { icon: IconName; label: string; children?: ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), className)}
+      aria-label={label}
+      {...rest}
+    >
+      <Icon name={icon} size={18} />
+      {children ? <span className="hidden text-ink-soft min-[600px]:inline">{children}</span> : null}
     </button>
   )
 }
 
 /* ---------- chips ---------- */
 
+const chipVariants = cva(
+  [
+    'inline-flex min-h-9 select-none items-center gap-2 rounded-[999px] border border-line bg-surface px-3 text-sm font-medium',
+    'whitespace-nowrap text-ink-soft transition-[background-color,border-color,color,transform,box-shadow] duration-150',
+    'hover:text-ink active:scale-[0.96] [-webkit-tap-highlight-color:transparent]',
+    'aria-pressed:border-rose aria-pressed:bg-blush aria-pressed:text-rose-ink aria-pressed:shadow-1 aria-pressed:-translate-y-px',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+    'disabled:pointer-events-none disabled:opacity-50',
+  ].join(' '),
+  { variants: {}, defaultVariants: {} }
+)
+
 export function Chip({
   active,
+  className,
   children,
   ...rest
 }: { active?: boolean } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button className="chip" aria-pressed={active} {...rest}>
+    <button className={cn(chipVariants(), className)} aria-pressed={active} {...rest}>
       {children}
     </button>
   )
 }
 
-export function ChipRow({ children, label }: { children: ReactNode; label: string }) {
+export function ChipRow({ children, label, className }: { children: ReactNode; label: string; className?: string }) {
   return (
-    <div className="chip-row" role="group" aria-label={label}>
+    <div
+      role="group"
+      aria-label={label}
+      className={cn(
+        'flex gap-2 overflow-x-auto py-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden wide:flex-wrap wide:overflow-visible',
+        className
+      )}
+    >
       {children}
     </div>
+  )
+}
+
+/* ---------- picker card (templates, frames, filters, stickers) ---------- */
+
+export function PickerCard({
+  selected,
+  className,
+  children,
+  ...rest
+}: { selected?: boolean } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      className={cn(
+        [
+          'flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border-2 border-line bg-surface p-2',
+          'transition-[transform,box-shadow,border-color,background-color] duration-150 ease-[cubic-bezier(0.215,0.61,0.355,1)]',
+          'active:scale-[0.97] aria-checked:border-rose aria-checked:bg-blush',
+          'hover:-translate-y-0.5 hover:shadow-2 [@media(hover:none)]:hover:translate-y-0',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface',
+        ].join(' '),
+        className
+      )}
+      aria-checked={rest['aria-checked'] ?? selected}
+      {...rest}
+    >
+      {children}
+    </button>
   )
 }
 
@@ -90,13 +205,13 @@ export function Slider({
   format?: (v: number) => string
 }) {
   return (
-    <div className="slider">
-      <label>
+    <div className="flex flex-col gap-1">
+      <label className="flex justify-between text-sm text-ink-soft">
         <span>{label}</span>
-        <span>{format ? format(value) : Math.round(value * 100) + '%'}</span>
+        <span className="font-medium text-ink">{format ? format(value) : Math.round(value * 100) + '%'}</span>
       </label>
       <SliderPrimitive.Root
-        className="slider-root"
+        className="relative flex h-7 touch-none select-none items-center"
         value={[value]}
         min={min}
         max={max}
@@ -105,10 +220,17 @@ export function Slider({
         onValueChange={(v) => onChange(v[0] ?? min)}
         onValueCommit={() => onCommit?.()}
       >
-        <SliderPrimitive.Track className="slider-track">
-          <SliderPrimitive.Range className="slider-range" />
+        <SliderPrimitive.Track className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
+          <SliderPrimitive.Range className="absolute h-full rounded-full bg-rose-deep" />
         </SliderPrimitive.Track>
-        <SliderPrimitive.Thumb className="slider-thumb" />
+        <SliderPrimitive.Thumb
+          className={[
+            'relative z-[1] block size-[22px] cursor-grab rounded-full border-2 border-rose-deep bg-surface shadow-1',
+            'transition-transform duration-150 ease-[cubic-bezier(0.215,0.61,0.355,1)]',
+            'hover:scale-[1.12] active:cursor-grabbing active:scale-[1.05]',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+          ].join(' ')}
+        />
       </SliderPrimitive.Root>
     </div>
   )
@@ -128,9 +250,19 @@ export function Segmented({
   label: string
 }) {
   return (
-    <div className="segmented" role="group" aria-label={label}>
+    <div role="group" aria-label={label} className="inline-flex gap-0.5 rounded-[999px] bg-surface-2 p-[3px]">
       {options.map((o) => (
-        <button key={o.value} aria-pressed={o.value === value} onClick={() => onChange(o.value)}>
+        <button
+          key={o.value}
+          aria-pressed={o.value === value}
+          onClick={() => onChange(o.value)}
+          className={[
+            'min-h-[34px] rounded-[999px] px-4 text-sm font-semibold text-ink-soft',
+            'transition-[background-color,color,box-shadow] duration-150',
+            'aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:shadow-1',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
+          ].join(' ')}
+        >
           {o.label}
         </button>
       ))}
@@ -138,7 +270,42 @@ export function Segmented({
   )
 }
 
-/* ---------- sheet (Radix Dialog, docked style) ---------- */
+/* ---------- tabs (Radix) ---------- */
+
+export const Tabs = TabsPrimitive.Root
+
+export function TabsList({ className, ...rest }: React.ComponentProps<typeof TabsPrimitive.List>) {
+  return (
+    <TabsPrimitive.List
+      className={cn('flex flex-wrap gap-2 focus-visible:outline-none', className)}
+      {...rest}
+    />
+  )
+}
+
+export function TabsTrigger({ className, ...rest }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+  return (
+    <TabsPrimitive.Trigger
+      className={cn(
+        [
+          'inline-flex min-h-10 select-none items-center gap-1.5 rounded-[999px] border border-line bg-surface px-4',
+          'text-sm font-semibold whitespace-nowrap text-ink-soft',
+          'transition-[background-color,border-color,color] duration-150',
+          'data-[state=active]:border-ink data-[state=active]:bg-ink data-[state=active]:text-bg',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+        ].join(' '),
+        className
+      )}
+      {...rest}
+    />
+  )
+}
+
+export function TabsContent({ className, ...rest }: React.ComponentProps<typeof TabsPrimitive.Content>) {
+  return <TabsPrimitive.Content className={cn('focus-visible:outline-none', className)} {...rest} />
+}
+
+/* ---------- sheet (Radix Dialog, docked) ---------- */
 
 export function Sheet({
   open,
@@ -161,20 +328,32 @@ export function Sheet({
       }}
     >
       <Dialog.Portal>
-        <Dialog.Overlay className="sheet-scrim" />
-        <Dialog.Content className="sheet" aria-describedby={undefined}>
-          <div className="sheet-grabber" aria-hidden="true" />
-          <div className="sheet-head">
+        <Dialog.Overlay
+          className={[
+            'fixed inset-0 z-[var(--z-sheet)] bg-[rgba(34,26,18,0.45)] backdrop-blur-[2px]',
+            'data-[state=open]:animate-fade data-[state=closed]:animate-fade-out',
+          ].join(' ')}
+        />
+        <Dialog.Content
+          aria-describedby={undefined}
+          className={[
+            'fixed inset-x-0 bottom-0 z-[calc(var(--z-sheet)+1)] flex max-h-[min(78dvh,720px)] flex-col',
+            'rounded-t-lg bg-surface shadow-3 [transform-origin:50%_100%]',
+            'pb-[env(safe-area-inset-bottom,0px)]',
+            'data-[state=open]:animate-sheet-in data-[state=closed]:animate-sheet-out',
+            'wide:right-6 wide:bottom-6 wide:left-auto wide:w-[400px] wide:max-h-[min(80dvh,760px)] wide:rounded-md',
+          ].join(' ')}
+        >
+          <div aria-hidden="true" className="mx-auto mt-2 h-1 w-11 shrink-0 rounded-full bg-line wide:hidden" />
+          <div className="flex shrink-0 items-center gap-3 px-6 pb-3 pt-2">
             <Dialog.Title asChild>
-              <h2>{title}</h2>
+              <h2 className="flex-1 text-xl">{title}</h2>
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button className="icon-btn" aria-label={closeLabel}>
-                <Icon name="close" />
-              </button>
+              <IconButton icon="close" label={closeLabel} />
             </Dialog.Close>
           </div>
-          <div className="sheet-body">{children}</div>
+          <div className="overflow-y-auto px-6 pb-6 [-webkit-overflow-scrolling:touch]">{children}</div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
@@ -202,17 +381,28 @@ export function Modal({
       }}
     >
       <Dialog.Portal>
-        <Dialog.Overlay className="sheet-scrim" />
-        <Dialog.Content className="modal-card" aria-describedby={undefined}>
-          <div className="modal-head">
+        <Dialog.Overlay
+          className={[
+            'fixed inset-0 z-[var(--z-sheet)] bg-[rgba(34,26,18,0.45)] backdrop-blur-[2px]',
+            'data-[state=open]:animate-fade data-[state=closed]:animate-fade-out',
+          ].join(' ')}
+        />
+        <Dialog.Content
+          aria-describedby={undefined}
+          /* native `translate` centering composes with transform-only keyframes */
+          className={[
+            'fixed left-1/2 top-1/2 z-[calc(var(--z-sheet)+1)] max-h-[86dvh] w-[min(440px,calc(100vw-32px))]',
+            '-translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-md bg-surface p-6 shadow-3',
+            'data-[state=open]:animate-scale-in data-[state=closed]:animate-scale-out',
+          ].join(' ')}
+        >
+          <div className="mb-3 flex items-center gap-3">
             <Dialog.Title asChild>
-              <h2>{title}</h2>
+              <h2 className="m-0 flex-1 text-xl">{title}</h2>
             </Dialog.Title>
             {onClose ? (
               <Dialog.Close asChild>
-                <button className="icon-btn" aria-label="Close">
-                  <Icon name="close" />
-                </button>
+                <IconButton icon="close" label="Close" />
               </Dialog.Close>
             ) : null}
           </div>
@@ -241,7 +431,7 @@ export function ConfirmDialog({
   return (
     <Modal open={open} title={title} onClose={onCancel}>
       <p>{message}</p>
-      <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 16 }}>
+      <div className="mt-4 flex justify-end gap-3">
         <Button variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
@@ -264,12 +454,19 @@ export function ConfirmDialog({
 export function ToastRegion(): ReactNode {
   const { toasts, dismiss } = useToasts()
   return createPortal(
-    <div className="toast-region" role="status" aria-live="polite">
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed left-1/2 bottom-[calc(var(--tabbar-h)+12px)] z-[var(--z-toast)] flex w-[min(480px,calc(100vw-32px))] -translate-x-1/2 flex-col gap-2 wide:bottom-6"
+    >
       <AnimatePresence initial={false}>
         {toasts.map((t) => (
           <motion.div
             key={t.id}
-            className={`toast ${t.kind === 'error' ? 'error' : ''}`}
+            className={cn(
+              'flex items-start gap-2 rounded-md px-4 py-3 text-[0.9375rem] shadow-3',
+              t.kind === 'error' ? 'bg-danger text-white' : 'bg-ink text-bg'
+            )}
             initial={{ opacity: 0, y: 16, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
@@ -278,7 +475,7 @@ export function ToastRegion(): ReactNode {
             <span>{t.message}</span>
             {t.action ? (
               <button
-                className="btn-link"
+                className="ml-auto shrink-0 text-sm font-semibold underline"
                 onClick={() => {
                   t.action?.run()
                   dismiss(t.id)
@@ -288,7 +485,7 @@ export function ToastRegion(): ReactNode {
               </button>
             ) : null}
             {t.sticky ? (
-              <button className="btn-link" onClick={() => dismiss(t.id)}>
+              <button className="shrink-0 text-sm font-semibold underline" onClick={() => dismiss(t.id)}>
                 Dismiss
               </button>
             ) : null}
@@ -297,5 +494,38 @@ export function ToastRegion(): ReactNode {
       </AnimatePresence>
     </div>,
     document.body
+  )
+}
+
+/* ---------- cards, inputs, misc ---------- */
+
+export function Card({ className, ...rest }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn('rounded-md border border-line bg-surface p-4 shadow-1', className)} {...rest} />
+}
+
+export function EmptyState({ className, children, ...rest }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn(
+        'flex flex-col items-center gap-3 px-4 py-12 text-center text-ink-soft [&>h2]:text-ink [&>svg]:size-[72px] [&>svg]:text-ink-faint',
+        className
+      )}
+      {...rest}
+    >
+      {children}
+    </div>
+  )
+}
+
+export function Input({ className, ...rest }: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      className={cn(
+        'min-h-11 w-full rounded-sm border border-line bg-surface-2 px-3 text-ink',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1',
+        className
+      )}
+      {...rest}
+    />
   )
 }

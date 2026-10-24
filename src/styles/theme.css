@@ -1,0 +1,304 @@
+/*
+ * Keepsake master stylesheet (D-028): Tailwind CSS v4 + the Analog Heartbreak
+ * token contract. Tokens live in `@theme` — utilities and legacy var() users
+ * both read from here. No raw hex outside this file.
+ */
+@import 'tailwindcss';
+
+@theme {
+  /* ---------- color (Analog Heartbreak) ---------- */
+  --color-bg: #f7f1e5;
+  --color-surface: #fffdf6;
+  --color-surface-2: #f3ebdb;
+  --color-ink: #2b2118;
+  --color-ink-soft: #6e5f4e;
+  --color-ink-faint: #9a8b77;
+  --color-rose: #c4797f;
+  --color-rose-deep: #a3565e;
+  --color-rose-ink: #8c454d;
+  --color-blush: #f4e3dc;
+  --color-gold: #b98a2f;
+  --color-sage: #7d8b6a;
+  --color-line: #e4d8c2;
+  --color-danger: #a83a32;
+  --color-focus: #a3565e;
+  --color-dark-bg: #221a12;
+  --color-dark-surface: #2e241a;
+  --color-dark-text: #f7f1e5;
+  --color-dark-line: #4a3b2c;
+
+  /* ---------- typography ---------- */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-script: 'Caveat', 'Segoe Script', cursive;
+  --font-mono: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+
+  /* ---------- radii (override defaults: the Analog Heartbreak scale) ---------- */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+
+  /* ---------- shadows (warm, never black) ---------- */
+  --shadow-1: 0 1px 2px rgba(43, 33, 24, 0.08);
+  --shadow-2: 0 4px 16px rgba(43, 33, 24, 0.12);
+  --shadow-3: 0 12px 40px rgba(43, 33, 24, 0.18);
+
+  /* ---------- easing ---------- */
+  --ease-brand: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --ease-swift: cubic-bezier(0.165, 0.84, 0.44, 1);
+
+  /* ---------- animations (keyframes below are emitted with the tokens) ---------- */
+  --animate-enter: ks-enter 220ms var(--ease-brand) backwards;
+  --animate-fade: ks-fade 220ms ease-out backwards;
+  --animate-fade-out: ks-fade 150ms ease-in forwards;
+  --animate-develop: ks-develop 600ms var(--ease-brand) backwards;
+  --animate-pop: ks-pop 400ms var(--ease-swift) backwards;
+  --animate-sheet-in: ks-sheet-in 220ms var(--ease-brand);
+  --animate-sheet-out: ks-sheet-out 170ms var(--ease-brand);
+  --animate-scale-in: ks-scale-in 220ms var(--ease-brand);
+  --animate-scale-out: ks-scale-out 150ms var(--ease-brand);
+  --animate-shutter-ring: ks-ring 900ms var(--ease-brand) infinite;
+
+  @keyframes ks-enter {
+    from { opacity: 0; transform: translateY(8px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes ks-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes ks-develop {
+    from { opacity: 0.4; filter: blur(6px) brightness(1.25); }
+    to { opacity: 1; filter: blur(0) brightness(1); }
+  }
+  @keyframes ks-pop {
+    0% { opacity: 0; transform: scale(1.15); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes ks-sheet-in {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes ks-sheet-out {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(16px); }
+  }
+  /* transform-only keyframes: Tailwind v4 translate utilities use the native
+     `translate` property, so centering composes with these animations. */
+  @keyframes ks-scale-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes ks-scale-out {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.97); }
+  }
+  @keyframes ks-ring {
+    0% { opacity: 0.7; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.65); }
+  }
+
+  /* ---------- breakpoints ---------- */
+  /* 900px is the audited desktop boundary (D-020/021/027) — keep it exact. */
+  --breakpoint-wide: 900px;
+}
+
+/* ---------- layout + z tokens (not utility-mapped; plain vars) ---------- */
+:root {
+  --header-h: 56px;
+  --tabbar-h: calc(60px + env(safe-area-inset-bottom, 0px));
+  --content-max: 1160px;
+  --z-chrome: 10;
+  --z-sheet: 20;
+  --z-modal: 30;
+  --z-toast: 40;
+  --z-flash: 50;
+
+  /* legacy aliases so un-migrated stylesheets keep reading the same tokens */
+  --bg: var(--color-bg);
+  --surface: var(--color-surface);
+  --surface-2: var(--color-surface-2);
+  --ink: var(--color-ink);
+  --ink-soft: var(--color-ink-soft);
+  --ink-faint: var(--color-ink-faint);
+  --rose: var(--color-rose);
+  --rose-deep: var(--color-rose-deep);
+  --rose-ink: var(--color-rose-ink);
+  --blush: var(--color-blush);
+  --gold: var(--color-gold);
+  --sage: var(--color-sage);
+  --line: var(--color-line);
+  --danger: var(--color-danger);
+  --focus: var(--color-focus);
+  --dark-bg: var(--color-dark-bg);
+  --dark-surface: var(--color-dark-surface);
+  --dark-text: var(--color-dark-text);
+  --dark-line: var(--color-dark-line);
+  --font-ui: var(--font-sans);
+  --font-script-legacy: var(--font-script);
+  --r-pill: 999px;
+  --ease-out: var(--ease-brand);
+  --t-fast: 150ms;
+  --t-med: 220ms;
+}
+
+@layer base {
+  @font-face {
+    font-family: 'Fraunces';
+    src: url('../assets/fonts/fraunces-latin-500-normal.woff2') format('woff2');
+    font-weight: 500;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Fraunces';
+    src: url('../assets/fonts/fraunces-latin-600-normal.woff2') format('woff2');
+    font-weight: 600;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Fraunces';
+    src: url('../assets/fonts/fraunces-latin-700-normal.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Caveat';
+    src: url('../assets/fonts/caveat-latin-500-normal.woff2') format('woff2');
+    font-weight: 500;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Caveat';
+    src: url('../assets/fonts/caveat-latin-600-normal.woff2') format('woff2');
+    font-weight: 600;
+    font-display: swap;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--color-ink);
+    background-color: var(--color-bg);
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    /* clip (not hidden): overflow-x:hidden on body creates a scroll container that
+       breaks position:sticky descendants (the studio top band, D-026). */
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
+
+  /* subtle paper grain on the app background only (never over user photos) */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.05;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.15;
+    margin: 0;
+  }
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+
+  p { margin: 0 0 1rem; }
+  p:last-child { margin-bottom: 0; }
+
+  button {
+    cursor: pointer;
+  }
+
+  img,
+  video,
+  canvas {
+    display: block;
+    max-width: 100%;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  input[type='range'],
+  input[type='checkbox'] {
+    accent-color: var(--color-rose-deep);
+  }
+
+  kbd {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    padding: 1px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--color-line);
+    border-bottom-width: 2px;
+    background: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  ::selection {
+    background: var(--color-blush);
+    color: var(--color-ink);
+  }
+
+  #root {
+    position: relative;
+    z-index: 1;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* staggered entrances for tile/picker grids — cleaner here than per-item classes */
+  .stagger > * {
+    animation: var(--animate-enter);
+  }
+  .stagger-cards > * {
+    animation: var(--animate-enter);
+  }
+  .stagger-cards > *:nth-child(2) { animation-delay: 30ms; }
+  .stagger-cards > *:nth-child(3) { animation-delay: 60ms; }
+  .stagger-cards > *:nth-child(4) { animation-delay: 90ms; }
+  .stagger-cards > *:nth-child(5) { animation-delay: 120ms; }
+  .stagger-cards > *:nth-child(6) { animation-delay: 150ms; }
+  .stagger-cards > *:nth-child(7) { animation-delay: 180ms; }
+  .stagger-cards > *:nth-child(8) { animation-delay: 210ms; }
+  .stagger-cards > *:nth-child(9) { animation-delay: 240ms; }
+  .stagger-cards > *:nth-child(n + 10) { animation-delay: 270ms; }
+}
