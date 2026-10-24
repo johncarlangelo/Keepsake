@@ -126,7 +126,7 @@ canvas {
   gap: var(--s3);
   height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
   padding: env(safe-area-inset-top, 0px) var(--s4) 0;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  background: color-mix(in srgb, var(--bg) 95%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
 }
@@ -214,11 +214,21 @@ canvas {
   0% { opacity: 0; transform: scale(1.15); }
   100% { opacity: 1; transform: scale(1); }
 }
+@keyframes ks-ring {
+  0% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.65); }
+}
 
-.anim-enter { animation: ks-enter var(--t-med) var(--ease-out) both; }
-.anim-fade { animation: ks-fade var(--t-med) ease-out both; }
-.anim-develop { animation: ks-develop 600ms var(--ease-out) both; }
-.anim-pop { animation: ks-pop 400ms cubic-bezier(0.165, 0.84, 0.44, 1) both; }
+/*
+ * Entrance animations use fill-mode BACKWARDS deliberately: `both` leaves the final
+ * keyframe's transform applied after the animation ends, which makes the animated
+ * element a containing block for position:fixed descendants (sheets/modals) and
+ * breaks their placement. `backwards` returns the element to its natural styles.
+ */
+.anim-enter { animation: ks-enter var(--t-med) var(--ease-out) backwards; }
+.anim-fade { animation: ks-fade var(--t-med) ease-out backwards; }
+.anim-develop { animation: ks-develop 600ms var(--ease-out) backwards; }
+.anim-pop { animation: ks-pop 400ms cubic-bezier(0.165, 0.84, 0.44, 1) backwards; }
 
 .view-root { animation: ks-fade 160ms ease-out, ks-enter var(--t-med) var(--ease-out); }
 
@@ -233,8 +243,8 @@ canvas {
   }
 }
 
-/* stagger helper (gallery thumbs etc.) */
-.stagger > * { animation: ks-enter var(--t-med) var(--ease-out) both; }
+/* stagger helper (gallery thumbs, picker cards) */
+.stagger > * { animation: ks-enter var(--t-med) var(--ease-out) backwards; }
 .stagger > *:nth-child(n+13) { animation-delay: 0ms; }
 
 @media (min-width: 900px) {

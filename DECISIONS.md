@@ -124,3 +124,25 @@ determinism) rather than pixels; real pixel output verified once in-browser (PPR
 event, mobile 390 px no-scroll), Tier C real devices = UNVERIFIED. All device claims remain
 explicitly unverified pending hardware testing.
 **Consequences:** Docs never claim iOS/Android/Windows verification; VERIFY.md C1–C6 track the gap.
+
+## D-017 · 2026-10-24 · Fixed-position bug: entrance animations must not leave transforms applied
+**Context:** Owner-reported desktop bug — the "All layouts" sheet clipped/overlapped the page.
+Root cause: `.anim-enter` used `animation-fill-mode: both`, so the finished keyframe kept
+`transform: translateY(0) scale(1)` applied, making the animated section a containing block;
+`position: fixed` sheets/scrim inside it positioned against the section, not the viewport.
+**Decision:** (1) Portal Sheet/Modal to `document.body` via `createPortal` so overlays never
+inherit ancestor geometry. (2) All entrance animations use fill-mode `backwards` (final state is
+the element's natural styles, so no lingering transform). Documented in `base.css`.
+**Alternatives:** none needed once diagnosed; portals alone would have sufficed, but `backwards`
+removes the foot-gun for every future overlay.
+**Consequences:** Overlays are viewport-anchored anywhere they're rendered; entrance animations
+still run once and settle (reduced-motion unaffected).
+
+## D-018 · 2026-10-24 · Landing layout pills drive the session template + live preview
+**Context:** Owner report: quick-layout pills seemed unclickable — they only persisted a
+preference and never changed the session template; only "All layouts" visibly worked.
+**Decision:** New `capture.setTemplate(id)` action (idle-only); pills and the picker both write it;
+Booth hydrates from `settings.lastTemplateId` on mount; a live preview card (shared render engine,
+warm sample placeholder fills, no micro-text at that size — `RenderOptions`) shows the selected
+layout and cross-fades on change. Picker minis also use sample fills (`text: false`).
+**Consequences:** Pills give immediate visible feedback; "Start the Booth" uses the shown layout.

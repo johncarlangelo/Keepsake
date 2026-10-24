@@ -8,6 +8,12 @@
   align-items: center;
   padding-top: var(--s3);
 }
+.booth-hero-copy > * {
+  animation: ks-enter var(--t-med) var(--ease-out) backwards;
+}
+.booth-hero-copy > *:nth-child(2) { animation-delay: 60ms; }
+.booth-hero-copy > *:nth-child(3) { animation-delay: 120ms; }
+.booth-hero-copy > *:nth-child(4) { animation-delay: 180ms; }
 .booth-hero-copy h1 {
   font-size: clamp(1.8rem, 6vw, 2.6rem);
   margin-bottom: var(--s3);
@@ -17,35 +23,72 @@
   display: flex;
   justify-content: center;
   perspective: 900px;
+  animation: ks-enter 320ms var(--ease-out) 120ms backwards;
 }
 .hero-frame {
-  width: min(220px, 42vw);
+  width: min(180px, 36vw);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  padding: 14px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   box-shadow: var(--shadow-2);
   transform: rotate(3deg) rotateX(6deg);
   transition: transform var(--t-med) var(--ease-out);
 }
-.hero-frame:hover {
-  transform: rotate(1deg) rotateX(3deg);
+@media (hover: hover) and (pointer: fine) {
+  .hero-frame:hover { transform: rotate(1deg) rotateX(3deg); }
 }
 .hero-photo {
-  aspect-ratio: 4 / 3;
-  border-radius: 6px;
+  aspect-ratio: 16 / 10;
+  border-radius: 5px;
   background: linear-gradient(135deg, #d9b8a6 0%, #c98a8a 42%, #8a9b8a 78%, #6e5f4e 100%);
-  animation: ks-develop 1.4s var(--ease-out) both;
+  animation: ks-develop 1.4s var(--ease-out) backwards;
   animation-delay: inherit;
 }
 
 @media (min-width: 900px) {
   .booth-hero {
-    grid-template-columns: 1.2fr 0.8fr;
+    grid-template-columns: 1.25fr 0.75fr;
     gap: var(--s7);
+  }
+}
+
+/* ---------- layout picker + live preview ---------- */
+
+.layout-picker {
+  display: grid;
+  gap: var(--s5);
+  margin-top: var(--s6);
+}
+.layout-preview {
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  width: 100%;
+  animation: ks-enter var(--t-med) var(--ease-out) backwards;
+}
+/* the shared canvas keeps its intrinsic aspect: size by max edges, not 100% height */
+.layout-preview-canvas > div {
+  height: auto !important;
+  margin: 0 auto;
+}
+.layout-preview-canvas canvas {
+  width: auto;
+  height: auto;
+  max-height: min(340px, 44dvh);
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: var(--shadow-1);
+}
+
+@media (min-width: 900px) {
+  .layout-picker {
+    grid-template-columns: minmax(0, 1fr) 280px;
+    align-items: start;
+    gap: var(--s6);
   }
 }
 

@@ -69,14 +69,19 @@
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color var(--t-fast) ease, color var(--t-fast) ease, border-color var(--t-fast) ease;
+  transition: background-color var(--t-fast) ease, color var(--t-fast) ease, border-color var(--t-fast) ease,
+    transform var(--t-fast) ease, box-shadow var(--t-fast) ease;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
 }
 .chip:hover { color: var(--ink); }
+.chip:active { transform: scale(0.96); }
 .chip[aria-pressed='true'], .chip.active {
   background: var(--blush);
   color: var(--rose-deep);
   border-color: var(--rose);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-1);
 }
 .chip-row {
   display: flex;
@@ -87,6 +92,29 @@
   -webkit-overflow-scrolling: touch;
 }
 .chip-row::-webkit-scrollbar { display: none; }
+@media (min-width: 600px) {
+  .chip-row { flex-wrap: wrap; overflow-x: visible; }
+}
+
+/* staggered entrance for picker card grids */
+.stagger-cards > * { animation: ks-enter var(--t-med) var(--ease-out) backwards; }
+.stagger-cards > *:nth-child(2) { animation-delay: 30ms; }
+.stagger-cards > *:nth-child(3) { animation-delay: 60ms; }
+.stagger-cards > *:nth-child(4) { animation-delay: 90ms; }
+.stagger-cards > *:nth-child(5) { animation-delay: 120ms; }
+.stagger-cards > *:nth-child(6) { animation-delay: 150ms; }
+.stagger-cards > *:nth-child(7) { animation-delay: 180ms; }
+.stagger-cards > *:nth-child(8) { animation-delay: 210ms; }
+.stagger-cards > *:nth-child(9) { animation-delay: 240ms; }
+.stagger-cards > *:nth-child(10) { animation-delay: 270ms; }
+.stagger-cards > *:nth-child(n+11) { animation-delay: 300ms; }
+
+/* picker cards: quiet hover lift on precise pointers only */
+.picker-card { transition: transform var(--t-fast) var(--ease-out), box-shadow var(--t-fast) ease, border-color var(--t-fast) ease; }
+.picker-card:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) {
+  .picker-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+}
 
 /* ---------- sliders ---------- */
 
@@ -101,13 +129,17 @@
 }
 
 /* ---------- sheets & modals ---------- */
+/*
+ * Sheets/modals render through portals at body level; these styles rely on
+ * position:fixed actually meaning the viewport (see base.css note on fill modes).
+ */
 
 .sheet-scrim {
   position: fixed;
   inset: 0;
   z-index: var(--z-sheet);
   background: rgba(34, 26, 18, 0.45);
-  animation: ks-fade var(--t-med) ease-out both;
+  animation: ks-fade var(--t-med) ease-out backwards;
 }
 
 .sheet {
@@ -123,7 +155,8 @@
   border-radius: var(--r-lg) var(--r-lg) 0 0;
   box-shadow: var(--shadow-3);
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  animation: ks-enter var(--t-med) var(--ease-out) both;
+  transform-origin: 50% 100%;
+  animation: ks-enter var(--t-med) var(--ease-out) backwards;
 }
 .sheet-grabber {
   width: 44px;
@@ -161,7 +194,8 @@
   border-radius: var(--r-md);
   box-shadow: var(--shadow-3);
   padding: var(--s5);
-  animation: ks-enter var(--t-med) var(--ease-out) both;
+  transform-origin: 50% 50%;
+  animation: ks-enter var(--t-med) var(--ease-out) backwards;
 }
 .modal-card h2 { margin-bottom: var(--s3); }
 
@@ -203,7 +237,7 @@
   color: var(--bg);
   font-size: 0.9375rem;
   box-shadow: var(--shadow-3);
-  animation: ks-enter var(--t-med) var(--ease-out) both;
+  animation: ks-enter var(--t-med) var(--ease-out) backwards;
 }
 .toast.error { background: var(--danger); color: #fff; }
 .toast .btn-link {
@@ -213,6 +247,19 @@
   font-weight: 600;
   font-size: 0.875rem;
   flex: none;
+}
+
+/* ---------- shutter ---------- */
+
+.shutter { position: relative; }
+.shutter-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 3px solid var(--rose);
+  animation: ks-ring 900ms var(--ease-out) infinite;
+  pointer-events: none;
 }
 
 /* ---------- cards & misc ---------- */

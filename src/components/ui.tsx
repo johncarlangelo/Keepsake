@@ -1,5 +1,6 @@
 /** Core UI kit: Button, IconButton, Chip, Slider, Sheet, Modal, Confirm, Toasts, Segmented. */
 import { useEffect, useRef, type ReactNode, type ChangeEvent } from 'react'
+import { createPortal } from 'react-dom'
 import type { IconName } from './icons'
 import { Icon } from './icons'
 import { useToasts } from '../state/toast'
@@ -147,7 +148,8 @@ export function Sheet({
 }) {
   useEsc(open, onClose)
   if (!open) return null
-  return (
+  // Portaled to body: fixed positioning must never depend on animated ancestors
+  return createPortal(
     <>
       <div className="sheet-scrim" onClick={onClose} aria-hidden="true" />
       <div className="sheet" role="dialog" aria-modal="true" aria-label={title}>
@@ -158,7 +160,8 @@ export function Sheet({
         </div>
         <div className="sheet-body">{children}</div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
 
@@ -208,14 +211,15 @@ export function Modal({
     }
   }, [open])
   if (!open) return null
-  return (
+  return createPortal(
     <div className="modal-center">
       <div className="sheet-scrim" onClick={onClose} aria-hidden="true" />
       <div className="modal-card" role="dialog" aria-modal="true" aria-label={title} ref={ref}>
         <h2>{title}</h2>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

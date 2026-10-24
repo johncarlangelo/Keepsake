@@ -82,6 +82,15 @@ export function computeGeometry(templateId: string, frameId: string, W: number, 
   return { W, H, content, footer, slotRects }
 }
 
+export interface RenderOptions {
+  /** empty-slot treatment: near-invisible (editor canvas) or warm sample fills (pickers) */
+  placeholder?: 'subtle' | 'sample'
+  /** draw caption/date in the footer band (false for tiny previews where text is noise) */
+  text?: boolean
+}
+
+const SAMPLE_FILLS = ['#E5C9BC', '#D7DECB', '#EBDFC2', '#D8CBDD', '#E9D4C9', '#CFD9D4']
+
 /**
  * Render a composition onto a target canvas at the given pixel width.
  * Uses the same passes at preview and export sizes (ARCHITECHTURE §6.2).
@@ -90,8 +99,10 @@ export function renderComposition(
   target: HTMLCanvasElement,
   comp: Composition,
   images: Record<string, RenderImage | undefined>,
-  targetWidth: number
+  targetWidth: number,
+  opts: RenderOptions = {}
 ): void {
+  const { placeholder = 'subtle', text = true } = opts
   const ctx = target.getContext('2d')
   if (!ctx) return
   const template = getTemplate(comp.templateId)
@@ -151,8 +162,11 @@ export function renderComposition(
       }
       ctx.restore()
     } else {
-      // empty slot: quiet neutral fill (export keeps it clean; preview overlays hints in DOM)
-      ctx.fillStyle = 'rgba(43,33,24,0.05)'
+      // empty slot: quiet fill in the editor; warm sample fills in pickers/preview cards
+      ctx.fillStyle =
+        placeholder === 'sample'
+          ? SAMPLE_FILLS[i % SAMPLE_FILLS.length] ?? 'rgba(43,33,24,0.05)'
+          : 'rgba(43,33,24,0.05)'
       ctx.fillRect(rect.x, rect.y, rect.w, rect.h)
     }
     ctx.restore()
@@ -166,7 +180,7 @@ export function renderComposition(
   drawDecor(ctx, geo, frame)
 
   // 4. caption / date in footer band
-  if (geo.footer) {
+  if (geo.footer && text) {
     const textColor = comp.text.color === AUTO_TEXT_COLOR ? frame.footerStyle?.color ?? '#2B2118' : comp.text.color
     drawFooterText(ctx, geo.footer, comp.text, textColor)
   }

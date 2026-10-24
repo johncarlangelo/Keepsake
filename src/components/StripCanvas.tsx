@@ -1,7 +1,7 @@
 /** Shared strip preview canvas — renders via the same engine as export (D-005). */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Composition, PlacedSticker } from '../types'
-import { computeGeometry, renderComposition, type RenderImage } from '../render/compose'
+import { computeGeometry, renderComposition, type RenderImage, type RenderOptions } from '../render/compose'
 import { getTemplate } from '../data/templates'
 import { endInteraction, useEditor } from '../state/editor'
 import { getPhoto } from '../lib/db'
@@ -16,12 +16,14 @@ export function StripCanvas({
   className,
   interactive = false,
   onSlotTap,
+  renderOpts,
 }: {
   comp: Composition
   images: Record<string, RenderImage | undefined>
   className?: string
   interactive?: boolean
   onSlotTap?: (index: number | null) => void
+  renderOpts?: RenderOptions
 }) {
   const template = getTemplate(comp.templateId)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -47,8 +49,9 @@ export function StripCanvas({
     const el = wrapRef.current
     if (!el) return
     const ro = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect.width ?? 0
-      setCssW(Math.round(w))
+      const w = Math.round(entries[0]?.contentRect.width ?? 0)
+      // ignore sub-pixel chatter so intrinsic-size canvases converge instead of looping
+      setCssW((prev) => (Math.abs(prev - w) <= 1 ? prev : w))
     })
     ro.observe(el)
     return () => ro.disconnect()
@@ -58,8 +61,8 @@ export function StripCanvas({
     const canvas = canvasRef.current
     if (!canvas || cssW < 40) return
     const dpr = Math.min(2, window.devicePixelRatio || 1)
-    renderComposition(canvas, comp, images, Math.min(MAX_RENDER_W, Math.round(cssW * dpr)))
-  }, [comp, images, cssW, fontsReady])
+    renderComposition(canvas, comp, images, Math.min(MAX_RENDER_W, Math.round(cssW * dpr)), renderOpts)
+  }, [comp, images, cssW, fontsReady, renderOpts])
 
   const geo = useMemo(() => {
     if (cssW < 40) return null

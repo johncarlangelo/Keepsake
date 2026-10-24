@@ -3,13 +3,27 @@ import { useEffect, useMemo, useRef } from 'react'
 import type { Composition } from '../types'
 import { FRAMES } from '../data/frames'
 import { TEMPLATES } from '../data/templates'
-import { emptyComposition, renderComposition, type RenderImage } from '../render/compose'
+import { emptyComposition, renderComposition, type RenderImage, type RenderOptions } from '../render/compose'
 
-function MiniCanvas({ comp, images, width, height }: { comp: Composition; images: Record<string, RenderImage | undefined>; width: number; height: number }) {
+const MINI_OPTS: RenderOptions = { placeholder: 'sample', text: false }
+
+function MiniCanvas({
+  comp,
+  images,
+  width,
+  height,
+  opts = MINI_OPTS,
+}: {
+  comp: Composition
+  images: Record<string, RenderImage | undefined>
+  width: number
+  height: number
+  opts?: RenderOptions
+}) {
   const ref = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
-    if (ref.current) renderComposition(ref.current, comp, images, width)
-  }, [comp, images, width])
+    if (ref.current) renderComposition(ref.current, comp, images, width, opts)
+  }, [comp, images, width, opts])
   return <canvas ref={ref} style={{ width, height, display: 'block', borderRadius: 6 }} aria-hidden="true" />
 }
 
@@ -28,7 +42,7 @@ export function TemplatePicker({
     return map
   }, [])
   return (
-    <div role="radiogroup" aria-label="Strip layout" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: 12 }}>
+    <div role="radiogroup" aria-label="Strip layout" className="stagger-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: 12 }}>
       {TEMPLATES.map((t) => {
         const selected = t.id === selectedId
         const w = Math.min(84, Math.round((84 * t.canvas.w) / t.canvas.h))
@@ -39,6 +53,7 @@ export function TemplatePicker({
             role="radio"
             aria-checked={selected}
             onClick={() => onSelect(t.id)}
+            className="picker-card"
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -81,7 +96,7 @@ export function FramePicker({
     return map
   }, [base])
   return (
-    <div role="radiogroup" aria-label="Frame theme" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))', gap: 12 }}>
+    <div role="radiogroup" aria-label="Frame theme" className="stagger-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))', gap: 12 }}>
       {FRAMES.map((f) => {
         const selected = f.id === selectedId
         return (
@@ -90,6 +105,7 @@ export function FramePicker({
             role="radio"
             aria-checked={selected}
             onClick={() => onSelect(f.id)}
+            className="picker-card"
             style={{
               display: 'flex',
               flexDirection: 'column',

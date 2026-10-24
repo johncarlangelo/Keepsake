@@ -1,5 +1,5 @@
 /** Booth: landing → explainer → live camera → countdown → review (PRD §5.1/§6.3–6.4). */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CameraController } from '../lib/camera'
 import { newId, putPhoto, requestPersistence, storageEstimate } from '../lib/db'
 import { makeThumb, pooledUrl } from '../lib/images'
@@ -14,6 +14,7 @@ import { navigate } from '../route'
 import { Button, Chip, ChipRow, ConfirmDialog, Modal, Sheet } from '../components/ui'
 import { Icon } from '../components/icons'
 import { TemplatePicker } from '../components/pickers'
+import { StripCanvas } from '../components/StripCanvas'
 import type { StripTemplate } from '../types'
 
 export function BoothScreen() {
@@ -37,6 +38,7 @@ export function BoothScreen() {
   retakeRef.current = retakeOf
 
   const template = getTemplate(templateId)
+  const previewComp = useMemo(() => emptyComposition(templateId), [templateId])
   const controller = () => {
     if (!controllerRef.current) {
       const ctrl = new CameraController()
@@ -97,6 +99,17 @@ export function BoothScreen() {
       }
     })()
   }, [])
+
+  /* hydrate the session template from the persisted preference */
+  useEffect(() => {
+    const cap = useCapture.getState()
+    if (cap.phase === 'idle' && settings.lastTemplateId !== cap.templateId) cap.setTemplate(settings.lastTemplateId)
+  }, [settings.lastTemplateId])
+
+  const selectTemplate = (id: string): void => {
+    update({ lastTemplateId: id })
+    useCapture.getState().setTemplate(id)
+  }
 
   /* ---------- capture ---------- */
 
@@ -302,25 +315,42 @@ export function BoothScreen() {
         <HeroStrip />
       </div>
 
-      <h2 style={{ margin: '32px 0 8px', fontSize: '1.25rem' }}>Pick a layout</h2>
-      <p className="muted tiny">Shots, sizes, and shape — change it anytime in the Studio.</p>
-      <ChipRow label="Quick layouts">
-        {quickTemplates.map((t) => (
-          <Chip key={t.id} active={t.id === templateId} onClick={() => update({ lastTemplateId: t.id })}>
-            {t.name} · {t.shots}
-          </Chip>
-        ))}
-        <Chip onClick={() => setShowTemplates(true)}>
-          <Icon name="plus" size={14} /> All {TEMPLATES.length} layouts
-        </Chip>
-      </ChipRow>
-      <p className="tiny muted" style={{ marginTop: 20 }}>Session settings</p>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <Chip onClick={() => update({ countdown: settings.countdown === 0 ? 3 : settings.countdown === 3 ? 5 : 0 })}>
-          Countdown {settings.countdown === 0 ? 'off' : `${settings.countdown}s`}
-        </Chip>
-        <Chip onClick={() => update({ sound: !settings.sound })}>Sound {settings.sound ? 'on' : 'off'}</Chip>
-        <Chip onClick={() => update({ mirrorSave: !settings.mirrorSave })}>Mirror save {settings.mirrorSave ? 'on' : 'off'}</Chip>
+      <div className="layout-picker">
+        <div className="layout-picker-controls">
+          <h2 style={{ margin: '0 0 8px', fontSize: '1.25rem' }}>Pick a layout</h2>
+          <p className="muted tiny">Tap a layout to preview it — change it anytime in the Studio.</p>
+          <ChipRow label="Quick layouts">
+            {quickTemplates.map((t) => (
+              <Chip key={t.id} active={t.id === templateId} onClick={() => selectTemplate(t.id)}>
+                {t.name} · {t.shots}
+              </Chip>
+            ))}
+            <Chip onClick={() => setShowTemplates(true)}>
+              <Icon name="plus" size={14} /> All {TEMPLATES.length} layouts
+            </Chip>
+          </ChipRow>
+          <p className="tiny muted" style={{ marginTop: 20 }}>Session settings</p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Chip onClick={() => update({ countdown: settings.countdown === 0 ? 3 : settings.countdown === 3 ? 5 : 0 })}>
+              Countdown {settings.countdown === 0 ? 'off' : `${settings.countdown}s`}
+            </Chip>
+            <Chip onClick={() => update({ sound: !settings.sound })}>Sound {settings.sound ? 'on' : 'off'}</Chip>
+            <Chip onClick={() => update({ mirrorSave: !settings.mirrorSave })}>Mirror save {settings.mirrorSave ? 'on' : 'off'}</Chip>
+          </div>
+        </div>
+        <div className="card layout-preview" aria-label={`Preview of ${template.name} layout`}>
+          <div key={templateId} className="anim-enter" style={{ display: 'flex', minHeight: 0 }}>
+            <StripCanvas
+              comp={previewComp}
+              images={{}}
+              className="layout-preview-canvas"
+              renderOpts={{ placeholder: 'sample', text: false }}
+            />
+          </div>
+          <p className="tiny muted" style={{ textAlign: 'center', marginTop: 10, marginBottom: 0 }}>
+            {template.name} · {template.shots} {template.shots === 1 ? 'shot' : 'shots'}
+          </p>
+        </div>
       </div>
 
       <Modal open={showExplainer} title="Turn on the camera?" onClose={() => setShowExplainer(false)}>
@@ -343,9 +373,8 @@ export function BoothScreen() {
         <TemplatePicker
           selectedId={templateId}
           onSelect={(id) => {
-            update({ lastTemplateId: id })
-            useCapture.getState().startSession(id)
-            useCapture.getState().setPhase('idle')
+            selectTemplate(id)
+            setShowTemplates(false)
           }}
           images={{}}
         />
@@ -479,6 +508,7 @@ function LiveView(props: {
           onClick={onShutter}
           aria-label="Take photo"
           disabled={camState !== 'granted' || countdown !== null}
+          className={countdown !== null ? 'shutter shutter-pulse' : 'shutter'}
           style={{
             width: 76,
             height: 76,

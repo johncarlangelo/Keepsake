@@ -18,6 +18,8 @@ interface CaptureState {
   /** when set, the next captured shot replaces shots[retakeIndex] instead of appending */
   retakeIndex: number | null
   startSession: (templateId: string) => void
+  /** change the chosen template without starting the session (landing pre-selection) */
+  setTemplate: (templateId: string) => void
   enterLive: () => void
   beginRetake: (index: number) => void
   /** shot captured + auto-saved to Gallery; returns false if session is complete */
@@ -34,6 +36,9 @@ export const useCapture = create<CaptureState>((set, get) => ({
   retakeIndex: null,
 
   startSession: (templateId) => set({ phase: 'live', templateId, shots: [], retakeIndex: null }),
+  setTemplate: (templateId) => {
+    if (get().phase === 'idle') set({ templateId })
+  },
   enterLive: () => set({ phase: 'live' }),
   beginRetake: (index) => set({ phase: 'live', retakeIndex: index }),
   pushShot: (shot) => {

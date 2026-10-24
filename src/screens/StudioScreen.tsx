@@ -163,7 +163,7 @@ export function StudioScreen() {
         </Button>
       </div>
 
-      <div className="studio-canvas-area">
+      <div className="studio-canvas-area" key={`${comp.templateId}:${comp.frameId}`}>
         <StripCanvas comp={comp} images={images} interactive onSlotTap={onSlotTap} />
       </div>
 
