@@ -210,14 +210,16 @@ function StripOverlay({
               top: pct(r.y, geo.H),
               width: pct(r.w, geo.W),
               height: pct(r.h, geo.H),
-              border: selected ? '2px solid var(--rose)' : 'none',
+              border: selected ? '2px solid var(--rose)' : '2px solid transparent',
               borderRadius: 8,
-              background: isEmpty ? 'rgba(43,33,24,0.08)' : 'transparent',
+              background: isEmpty ? 'rgba(43,33,24,0.55)' : 'transparent',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'rgba(255,253,246,0.9)',
+              /* no visible glyphs on filled slots (label is aria-only) */
+              color: isEmpty ? '#fffdf6' : 'transparent',
               cursor: 'pointer',
+              transition: 'border-color var(--t-fast) ease, background-color var(--t-fast) ease, transform 100ms ease',
             }}
           >
             {isEmpty ? <Icon name="plus" size={28} /> : null}

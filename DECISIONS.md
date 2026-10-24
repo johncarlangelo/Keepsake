@@ -164,3 +164,20 @@ computes the fitted pixel box in JS; auto-height contexts pass `maxCanvasHeight`
 export sheet); caption/date sizes raised with clamped fit (default 0.05, range 0.03–0.12; date
 0.28 of band; script font +15% x-height compensation). Studio also lands on the Filter tab now —
 layout was already chosen pre-capture (owner feedback).
+
+## D-021 · 2026-10-24 · Cross-viewport UI audit (quantitative) + polish pass
+**Context:** Owner reported persistent unpolished buttons/layout across viewports.
+**Method:** scripted in-browser audit at 375/768/1280/1440 × booth/gallery/studio (all tabs):
+horizontal overflow, tap targets <24px, WCAG contrast on every visible button, cursor, transition
+coverage, canvas overflow past cards.
+**Findings fixed:**
+- Booth page overflowed horizontally at 375/768 (951px scrollWidth): grid auto columns sized to the
+  chip row's max-content. All hero/layout grids now use `minmax(0, 1fr)` + `min-width: 0`.
+- Primary buttons were white-on-rose at 3.29:1 (AA fail) → now rose-deep/rose-ink (4.6–5.2:1).
+- Selected chips & top-nav current were 4.16:1 → new `--rose-ink` text (5.2:1).
+- Empty-slot "+" overlay was near-invisible (1.11:1) → solid dark plate with ivory icon.
+- Filter thumbnails, sticker buttons, gallery tiles lacked hover/active feedback → shared
+  `.picker-card` polish (lift on precise pointers, press scale, transitions).
+- Native checkbox/range accents unbranded; `kbd` unstyled → tokenized.
+- Mobile Studio canvas raised to 64dvh; slot hit-areas carry aria labels with no phantom text.
+**Result:** final sweep reports zero issues across all view/views; gates green (54/54).

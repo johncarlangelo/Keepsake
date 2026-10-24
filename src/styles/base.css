@@ -102,6 +102,23 @@ canvas {
   border-radius: 4px;
 }
 
+/* native controls on-brand */
+input[type='range'],
+input[type='checkbox'] {
+  accent-color: var(--rose-deep);
+}
+
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 1px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
 ::selection {
   background: var(--blush);
   color: var(--ink);
@@ -165,7 +182,7 @@ canvas {
   transition: color var(--t-fast) ease, background-color var(--t-fast) ease;
 }
 .top-nav a:hover { color: var(--ink); background: var(--surface-2); }
-.top-nav a[aria-current='page'] { color: var(--rose-deep); background: var(--blush); }
+.top-nav a[aria-current='page'] { color: var(--rose-ink); background: var(--blush); }
 
 /* mobile tab bar */
 .tabbar {

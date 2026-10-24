@@ -77,6 +77,7 @@ export function FilterPicker({
         <button
           role="radio"
           aria-checked={selectedId === null}
+          className="picker-card"
           onClick={() => onSelect(null)}
           style={{
             display: 'flex',
@@ -102,6 +103,7 @@ export function FilterPicker({
               key={f.id}
               role="radio"
               aria-checked={selected}
+              className="picker-card"
               onClick={() => onSelect(f.id)}
               style={{
                 display: 'flex',

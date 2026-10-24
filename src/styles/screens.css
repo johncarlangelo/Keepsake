@@ -7,7 +7,14 @@
   gap: var(--s5);
   align-items: center;
   padding-top: var(--s3);
+  /* fr grid items default to min-width:auto and can blow out the page */
+  grid-template-columns: minmax(0, 1fr);
 }
+@media (min-width: 900px) {
+  .booth-hero { grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); gap: var(--s7); }
+}
+.booth-hero-copy,
+.hero-strip { min-width: 0; }
 .booth-hero-copy > * {
   animation: ks-enter var(--t-med) var(--ease-out) backwards;
 }
@@ -49,20 +56,16 @@
   animation-delay: inherit;
 }
 
-@media (min-width: 900px) {
-  .booth-hero {
-    grid-template-columns: 1.25fr 0.75fr;
-    gap: var(--s7);
-  }
-}
-
 /* ---------- layout picker + live preview ---------- */
 
 .layout-picker {
   display: grid;
   gap: var(--s5);
   margin-top: var(--s6);
+  /* minmax(0,1fr): plain auto columns size to the chip row's max-content and overflow the page */
+  grid-template-columns: minmax(0, 1fr);
 }
+.layout-picker-controls { min-width: 0; }
 .layout-preview {
   display: flex;
   flex-direction: column;
@@ -95,7 +98,7 @@
 .studio-canvas-area {
   flex: 1;
   min-height: 320px;
-  max-height: 58dvh;
+  max-height: 64dvh;
   display: flex;
   justify-content: center;
 }
@@ -186,7 +189,11 @@
   background: var(--surface-2);
   cursor: pointer;
   padding: 0;
-  transition: border-color var(--t-fast) ease;
+  transition: border-color var(--t-fast) ease, transform var(--t-fast) var(--ease-out), box-shadow var(--t-fast) ease;
+}
+.gallery-tile:active { transform: scale(0.96); }
+@media (hover: hover) and (pointer: fine) {
+  .gallery-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
 }
 .gallery-tile img {
   width: 100%;

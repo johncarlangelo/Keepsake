@@ -21,6 +21,7 @@ export function StickerTray(): React.ReactNode {
             onClick={() => addSticker(s.id)}
             title={`Add ${s.name}`}
             aria-label={`Add ${s.name} sticker`}
+            className="picker-card"
             style={{
               padding: 10,
               borderRadius: 12,
