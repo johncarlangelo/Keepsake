@@ -146,6 +146,9 @@
   z-index: var(--z-sheet);
   background: rgba(34, 26, 18, 0.45);
   animation: ks-fade var(--t-med) ease-out backwards;
+  /* parent .modal-center is pointer-events:none; pointer-events inherits, so the
+     scrim must re-enable it or "click outside to close" silently dies */
+  pointer-events: auto;
 }
 
 .sheet {
@@ -208,6 +211,13 @@
   animation: ks-enter var(--t-med) var(--ease-out) backwards;
 }
 .modal-card h2 { margin-bottom: var(--s3); }
+.modal-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin-bottom: var(--s3);
+}
+.modal-head h2 { margin: 0; flex: 1; }
 
 @media (min-width: 900px) {
   .sheet {

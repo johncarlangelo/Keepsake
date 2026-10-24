@@ -147,6 +147,7 @@ export function Sheet({
   closeLabel?: string
 }) {
   useEsc(open, onClose)
+  useLockBodyScroll(open)
   if (!open) return null
   // Portaled to body: fixed positioning must never depend on animated ancestors
   return createPortal(
@@ -180,6 +181,7 @@ export function Modal({
 }) {
   const ref = useRef<HTMLDivElement>(null)
   useEsc(open, onClose)
+  useLockBodyScroll(open)
   useEffect(() => {
     if (!open) return
     const node = ref.current
@@ -215,7 +217,10 @@ export function Modal({
     <div className="modal-center">
       <div className="sheet-scrim" onClick={onClose} aria-hidden="true" />
       <div className="modal-card" role="dialog" aria-modal="true" aria-label={title} ref={ref}>
-        <h2>{title}</h2>
+        <div className="modal-head">
+          <h2>{title}</h2>
+          {onClose ? <IconButton icon="close" label="Close" onClick={onClose} /> : null}
+        </div>
         {children}
       </div>
     </div>,
@@ -301,4 +306,18 @@ function useEsc(active: boolean, handler?: () => void): void {
     window.addEventListener('keydown', fn)
     return () => window.removeEventListener('keydown', fn)
   }, [active, handler])
+}
+
+/** Freeze page scroll while any modal/sheet is open (counted: nested dialogs safe). */
+let lockCount = 0
+function useLockBodyScroll(active: boolean): void {
+  useEffect(() => {
+    if (!active) return
+    lockCount += 1
+    if (lockCount === 1) document.body.style.overflow = 'hidden'
+    return () => {
+      lockCount -= 1
+      if (lockCount === 0) document.body.style.overflow = ''
+    }
+  }, [active])
 }

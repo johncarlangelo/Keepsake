@@ -194,3 +194,14 @@ Studio → Export → Save strip to Gallery.
 removing captures (explicitly rejected by owner).
 **Consequences:** none storage-wise (same records); tile CSS uses higher-specificity selectors so
 base tile rules can't override the strip variant.
+
+## D-023 · 2026-10-25 · Modal dismissal: pointer-events inheritance bug + affordances
+**Context:** Owner could not close the photo detail modal by clicking outside. `.modal-center`
+uses `pointer-events: none` so the page behind stays interactive; `pointer-events` is inherited,
+so the backdrop inside it inherited `none` and never received clicks — the card alone re-enabled it.
+**Decision:** (1) `.sheet-scrim { pointer-events: auto }` explicitly. (2) Modal now has a header
+with a visible X close button (only the scrim/Esc existed before). (3) Body scroll locks while any
+Modal/Sheet is open (counted, so nested confirm dialogs restore correctly).
+**Sweep result:** every dismissible surface now supports scrim-click + X + Esc: photo detail,
+camera explainer, all confirm dialogs, all sheets (export, photo picker, all-layouts, storage info).
+Verified in-browser: open → close by scrim click, X, and Esc; scroll locks and restores.
