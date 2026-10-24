@@ -210,19 +210,34 @@ function StripOverlay({
               top: pct(r.y, geo.H),
               width: pct(r.w, geo.W),
               height: pct(r.h, geo.H),
-              border: selected ? '2px solid var(--rose)' : '2px solid transparent',
+              border: selected ? '2px solid var(--rose)' : isEmpty ? '2px dashed rgba(43,33,24,0.35)' : '2px solid transparent',
               borderRadius: 8,
-              background: isEmpty ? 'rgba(43,33,24,0.55)' : 'transparent',
+              background: 'transparent',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              /* no visible glyphs on filled slots (label is aria-only) */
-              color: isEmpty ? '#fffdf6' : 'transparent',
+              color: 'transparent',
               cursor: 'pointer',
-              transition: 'border-color var(--t-fast) ease, background-color var(--t-fast) ease, transform 100ms ease',
+              transition: 'border-color var(--t-fast) ease',
             }}
           >
-            {isEmpty ? <Icon name="plus" size={28} /> : null}
+            {isEmpty ? (
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  background: 'var(--ink)',
+                  color: 'var(--bg)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  boxShadow: 'var(--shadow-2)',
+                }}
+              >
+                <Icon name="plus" size={22} />
+              </span>
+            ) : null}
           </button>
         )
       })}

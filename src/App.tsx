@@ -1,6 +1,6 @@
 /** App shell: header, view routing (Motion transitions), tab bar, toasts. */
 import { useEffect } from 'react'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { useHashRoute, navigate } from './route'
 import { BoothScreen } from './screens/BoothScreen'
 import { StudioScreen } from './screens/StudioScreen'
@@ -54,18 +54,17 @@ export function App() {
       </header>
 
       <main className="app-main" id="main">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={view}
-            className="view-root"
-            initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
-          >
-            {view === 'booth' ? <BoothScreen /> : view === 'studio' ? <StudioScreen /> : <GalleryScreen />}
-          </motion.div>
-        </AnimatePresence>
+        {/* enter-only transition: no AnimatePresence exit — a stalled/occluded rAF
+            must never block the next view from mounting */}
+        <motion.div
+          key={view}
+          className="view-root"
+          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+        >
+          {view === 'booth' ? <BoothScreen /> : view === 'studio' ? <StudioScreen /> : <GalleryScreen />}
+        </motion.div>
       </main>
 
       <nav className="tabbar" aria-label="Primary">

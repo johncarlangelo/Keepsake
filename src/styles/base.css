@@ -143,8 +143,9 @@ kbd {
   gap: var(--s3);
   height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
   padding: env(safe-area-inset-top, 0px) var(--s4) 0;
-  background: color-mix(in srgb, var(--bg) 95%, transparent);
-  backdrop-filter: blur(10px);
+  /* fully opaque: translucent headers let scrolled content ghost through and
+     look like controls are being cut in half */
+  background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 

@@ -221,3 +221,17 @@ explicitly). Charter prefers minimal deps; AGENTS.md requires justification per 
 react-spring (lighter but less DX); keeping hand-rolled (owner asked for libraries).
 **Consequences:** bundle grows (~+60–70 KB gz est., budget 250 KB); overlays gain Radix-maintained
 a11y behaviors; icons noticeably more professional; exit animations finally exist.
+
+## D-025 · 2026-10-25 · Empty-slot affordance, opaque header, sticky studio toolbar, enter-only transitions
+**Context:** Owner: "you still did not fix this" — screenshot showed a black bar over a strip frame
+reading as a bug. Diagnosis: (1) my earlier empty-slot "fix" used a solid dark plate over the whole
+slot — looked like a broken render; (2) the Export button appeared cut in half under the
+semi-transparent sticky header; (3) verification also exposed AnimatePresence mode="wait" blocking
+the next view when exit rAF stalls (occluded panes).
+**Decision:** Empty slots now show a dashed outline + a 44px circular ink "+" button (proper add
+ affordance, no full-plate fill). Header is fully opaque (--bg). Studio toolbar is sticky under the
+header on mobile so Undo/Redo/Export stay reachable while the tool panel scrolls. View transitions
+are enter-only (no exit wait) so a stalled frame can never block navigation; Motion exit remains
+for toasts/overlays where a stall is cosmetic and self-heals.
+**Verified in-browser:** empty slot = transparent bg + dashed border + 44px circle; toolbar
+position sticky; #/gallery renders after reload; studio mounts after every navigation.

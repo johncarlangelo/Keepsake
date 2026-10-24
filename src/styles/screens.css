@@ -108,6 +108,16 @@
   gap: var(--s2);
   flex-wrap: wrap;
 }
+/* keep Undo/Redo/Export reachable while the tool panel scrolls (mobile layout) */
+@media (max-width: 899px) {
+  .studio-toolbar {
+    position: sticky;
+    top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+    z-index: 5;
+    background: var(--bg);
+    padding: var(--s2) 0;
+  }
+}
 .studio-tabs {
   display: flex;
   gap: var(--s2);
