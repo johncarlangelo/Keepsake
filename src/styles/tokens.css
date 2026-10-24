@@ -1,0 +1,68 @@
+/* Keepsake design tokens — the contract. No raw hex outside this file (see DESIGN.md §1–4). */
+
+:root {
+  /* color */
+  --bg: #f7f1e5;
+  --surface: #fffdf6;
+  --surface-2: #f3ebdb;
+  --ink: #2b2118;
+  --ink-soft: #6e5f4e;
+  --ink-faint: #9a8b77;
+  --rose: #c4797f;
+  --rose-deep: #a3565e;
+  --blush: #f4e3dc;
+  --gold: #b98a2f;
+  --sage: #7d8b6a;
+  --line: #e4d8c2;
+  --danger: #a83a32;
+  --focus: #a3565e;
+  --dark-bg: #221a12;
+  --dark-surface: #2e241a;
+  --dark-text: #f7f1e5;
+  --dark-line: #4a3b2c;
+
+  /* typography */
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-script: 'Caveat', 'Segoe Script', cursive;
+  --font-mono: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+
+  /* space scale (px) */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 64px;
+
+  /* radii */
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+
+  /* shadows (warm, never black) */
+  --shadow-1: 0 1px 2px rgba(43, 33, 24, 0.08);
+  --shadow-2: 0 4px 16px rgba(43, 33, 24, 0.12);
+  --shadow-3: 0 12px 40px rgba(43, 33, 24, 0.18);
+
+  /* z scale */
+  --z-chrome: 10;
+  --z-sheet: 20;
+  --z-modal: 30;
+  --z-toast: 40;
+  --z-flash: 50;
+
+  /* motion */
+  --ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
+  --t-fast: 150ms;
+  --t-med: 220ms;
+
+  /* layout */
+  --tabbar-h: calc(60px + env(safe-area-inset-bottom, 0px));
+  --header-h: 56px;
+  --content-max: 1160px;
+}

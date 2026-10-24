@@ -1,0 +1,244 @@
+/* Base: reset, typography, app chrome, motion, reduced motion, safe areas. */
+
+@font-face {
+  font-family: 'Fraunces';
+  src: url('../assets/fonts/fraunces-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Fraunces';
+  src: url('../assets/fonts/fraunces-latin-600-normal.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Fraunces';
+  src: url('../assets/fonts/fraunces-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Caveat';
+  src: url('../assets/fonts/caveat-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Caveat';
+  src: url('../assets/fonts/caveat-latin-600-normal.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  background-color: var(--bg);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* subtle paper grain on the app background only (never over user photos) */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.05;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0;
+}
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.25rem; }
+
+p { margin: 0 0 var(--s4); }
+p:last-child { margin-bottom: 0; }
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+img,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--blush);
+  color: var(--ink);
+}
+
+/* ---------- app layout ---------- */
+
+#root {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-chrome);
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) var(--s4) 0;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  text-decoration: none;
+}
+.wordmark svg { color: var(--rose); }
+
+.app-header .spacer { flex: 1; }
+
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--s5) var(--s4) calc(var(--s6) + var(--tabbar-h));
+}
+
+/* desktop top nav */
+.top-nav { display: none; gap: var(--s2); }
+.top-nav a {
+  padding: var(--s2) var(--s4);
+  border-radius: var(--r-pill);
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--t-fast) ease, background-color var(--t-fast) ease;
+}
+.top-nav a:hover { color: var(--ink); background: var(--surface-2); }
+.top-nav a[aria-current='page'] { color: var(--rose-deep); background: var(--blush); }
+
+/* mobile tab bar */
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-chrome);
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  height: var(--tabbar-h);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+.tabbar a {
+  flex: 1;
+  min-width: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color var(--t-fast) ease;
+}
+.tabbar a[aria-current='page'] { color: var(--rose-deep); }
+.tabbar a svg { width: 24px; height: 24px; }
+
+/* ---------- motion ---------- */
+
+@keyframes ks-enter {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ks-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ks-develop {
+  from { opacity: 0.4; filter: blur(6px) brightness(1.25); }
+  to { opacity: 1; filter: blur(0) brightness(1); }
+}
+@keyframes ks-pop {
+  0% { opacity: 0; transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.anim-enter { animation: ks-enter var(--t-med) var(--ease-out) both; }
+.anim-fade { animation: ks-fade var(--t-med) ease-out both; }
+.anim-develop { animation: ks-develop 600ms var(--ease-out) both; }
+.anim-pop { animation: ks-pop 400ms cubic-bezier(0.165, 0.84, 0.44, 1) both; }
+
+.view-root { animation: ks-fade 160ms ease-out, ks-enter var(--t-med) var(--ease-out); }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* stagger helper (gallery thumbs etc.) */
+.stagger > * { animation: ks-enter var(--t-med) var(--ease-out) both; }
+.stagger > *:nth-child(n+13) { animation-delay: 0ms; }
+
+@media (min-width: 900px) {
+  .top-nav { display: flex; }
+  .tabbar { display: none; }
+  .app-main { padding-bottom: var(--s8); }
+}
