@@ -106,3 +106,21 @@ intended location) running only real scripts (`typecheck`, `lint`, `test`, `buil
 **Decision:** Local commits per major task, conventional one-line subjects; push to
 `origin/main` after each milestone (explicitly authorized). Never force-push or rewrite history.
 **Consequences:** CI and review see incremental history; agents must not push elsewhere/deploy.
+
+## D-015 · 2026-10-24 · Test canvas strategy: purpose-built mock instead of jest-canvas-mock
+**Context:** Vitest/jsdom has no canvas implementation; jest-canvas-mock requires a Jest runtime
+global (`jest.fn`, `jest.isMockFunction`) that does not exist under Vitest.
+**Decision:** Wrote `tests/canvas-mock.ts` (~120 lines): per-canvas recording 2D context with the
+exact API surface Keepsake uses, plus a Path2D stub. Removed the jest-canvas-mock dependency.
+**Alternatives:** extend a `jest`-global shim (fragile, chases an external package's internals);
+`node-canvas` native dep (heavy, Windows build friction).
+**Consequences:** Compose tests assert call sequences (pass order, save/restore balance,
+determinism) rather than pixels; real pixel output verified once in-browser (PPROGRESS Tier B).
+
+## D-016 · 2026-10-24 · Verification evidence recorded honestly
+**Context:** Charter forbids claiming untested platforms as verified.
+**Decision:** PPROGRESS records three tiers separately: Tier A automated (54/54 green, build
+78 kB gz), Tier B desktop-emulation smoke (render pixel-check, filter live-apply, export download
+event, mobile 390 px no-scroll), Tier C real devices = UNVERIFIED. All device claims remain
+explicitly unverified pending hardware testing.
+**Consequences:** Docs never claim iOS/Android/Windows verification; VERIFY.md C1–C6 track the gap.
