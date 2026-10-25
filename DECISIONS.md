@@ -489,3 +489,26 @@ pending resolver (and an early return only after that event has actually fired);
 a real MediaRecorder (MP4 in Chrome) for manual mid-recording stop, stop after the auto-timer,
 and the countdown-shaped flow — all produce non-empty clips. Owner also asked for the session
 settings in the start sheet not to side-scroll: chips now wrap (`flex-wrap`).
+
+## D-035 · 2026-10-25 · Scroll-performance pass: remove full-page blend + chrome blur, promote animated layers
+**Context:** Owner reported perceived sub-60fps scrolling on the live site. In-app frame
+measurement was not possible (the automation browser pane is occluded \u2014 requestAnimationFrame
+is throttled to zero in hidden tabs), so the pass targeted the four textbook scroll-jank patterns
+present in the code, each verified against the rendering model:
+1. **Grain overlay used `mix-blend-mode: multiply` on a fixed full-viewport layer** \u2014 blending
+   forces the compositor to blend the entire page through that layer on every scrolled frame.
+   Replaced with plain low-opacity noise (0.035, no blend) \u2014 visually equivalent on the ivory
+   background.
+2. **Header/tabbar used `backdrop-filter: blur`** \u2014 blur recomputes every frame while content
+   scrolls beneath. Replaced with fully opaque backgrounds (the header was 90% opaque anyway;
+   blur retained on sheets/modals, which only render while open).
+3. **Continuously-animating layers** (aurora blobs, marquee track, hero fan strips) now carry
+   `will-change: transform` so each is promoted to its own compositor layer and the animation
+   stays off the main thread.
+4. **Below-fold booth sections** (bento, steps) got `content-visibility: auto` with intrinsic
+   sizes so their render work is skipped while off-screen.
+**Verification:** gates green (65/65); build unchanged in size; screenshots confirm the grain,
+aurora, marquee, and chrome render as before. Frame-rate confirmation is the owner's perception
+on the live site \u2014 recorded as such, not claimed as measured.
+**Consequences:** blur remains only on modals/sheets (open-state, not scroll-state); reduced-
+motion users were never affected (animations already disabled there).

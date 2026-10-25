@@ -79,7 +79,7 @@ export function HeroStage({
 export function FeatureBento({ previewComp, templateLabel }: { previewComp: Composition; templateLabel: string }) {
   const marqueeItems = [...FILTERS.slice(0, 6).map((f) => f.name), ...FRAMES.slice(0, 3).map((f) => f.name), 'No uploads', 'Works offline']
   return (
-    <section aria-label="What Keepsake does" className="mt-10">
+    <section aria-label="What Keepsake does" className="mt-10 [content-visibility:auto] [contain-intrinsic-size:auto_900px]">
       <Marquee items={marqueeItems} />
       <div className="mt-6 grid gap-4 [grid-template-columns:minmax(0,1fr)] wide:grid-cols-3">
         <SpotlightCard className="flex items-center justify-center gap-6 p-6 wide:col-span-2">
@@ -136,7 +136,7 @@ export function FeatureBento({ previewComp, templateLabel }: { previewComp: Comp
 
 export function HowItWorks(): React.ReactNode {
   return (
-    <section aria-label="How it works" className="mt-12">
+    <section aria-label="How it works" className="mt-12 [content-visibility:auto] [contain-intrinsic-size:auto_480px]">
       <h2 className="mb-1 font-display text-2xl">Three steps to a keepsake</h2>
       <p className="muted mb-6 text-sm">From hello to saved-and-shared in about two minutes.</p>
       <div className="grid gap-4 [grid-template-columns:minmax(0,1fr)] wide:grid-cols-3">

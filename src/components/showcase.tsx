@@ -16,15 +16,15 @@ export function AuroraBackdrop({ className }: { className?: string }) {
   return (
     <div aria-hidden="true" className={cn('pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]', className)}>
       <div
-        className="absolute -left-[12%] -top-[30%] h-[65%] w-[55%] animate-aurora rounded-full bg-rose-soft/45 blur-[90px]"
+        className="absolute -left-[12%] -top-[30%] h-[65%] w-[55%] animate-aurora rounded-full bg-rose-soft/45 blur-[90px] [will-change:transform]"
         style={{ animationDelay: '0s' }}
       />
       <div
-        className="absolute -right-[15%] top-[5%] h-[60%] w-[45%] animate-aurora rounded-full bg-gold-soft/40 blur-[100px]"
+        className="absolute -right-[15%] top-[5%] h-[60%] w-[45%] animate-aurora rounded-full bg-gold-soft/40 blur-[100px] [will-change:transform]"
         style={{ animationDelay: '-5s' }}
       />
       <div
-        className="absolute bottom-[-25%] left-[22%] h-[60%] w-[50%] animate-aurora rounded-full bg-sage-soft/40 blur-[110px]"
+        className="absolute bottom-[-25%] left-[22%] h-[60%] w-[50%] animate-aurora rounded-full bg-sage-soft/40 blur-[110px] [will-change:transform]"
         style={{ animationDelay: '-10s' }}
       />
     </div>
@@ -90,7 +90,7 @@ export function Marquee({ items }: { items: string[] }) {
   ))
   return (
     <div aria-hidden="true" className="relative overflow-hidden py-1 [mask-image:linear-gradient(90deg,transparent,black_8%,black_92%,transparent)]">
-      <div className="flex w-max animate-marquee gap-8">
+      <div className="flex w-max animate-marquee gap-8 [will-change:transform]">
         <div className="flex gap-8">{row}</div>
         <div className="flex gap-8">{items.map((s, i) => (
           <span key={i} className="inline-flex items-center gap-3 text-sm font-semibold tracking-[0.14em] text-ink-faint uppercase">
@@ -110,7 +110,7 @@ export function FanStrips({ className }: { className?: string }) {
   return (
     <div aria-hidden="true" className={cn('relative flex items-center justify-center [perspective:1000px]', className)}>
       {/* back strip */}
-      <div className="absolute w-[min(150px,30vw)] rotate-[-7deg] animate-bob rounded-md border border-line bg-surface p-2.5 shadow-2 [transform-origin:50%_120%]" style={{ animationDelay: '-2.5s' }}>
+      <div className="absolute w-[min(150px,30vw)] rotate-[-7deg] animate-bob rounded-md border border-line bg-surface p-2.5 shadow-2 [transform-origin:50%_120%] [will-change:transform]" style={{ animationDelay: '-2.5s' }}>
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
@@ -123,7 +123,7 @@ export function FanStrips({ className }: { className?: string }) {
         ))}
       </div>
       {/* front strip */}
-      <div className="relative w-[min(180px,36vw)] rotate-[4deg] animate-float rounded-md border border-line bg-surface p-3 shadow-3 [transform-origin:50%_120%]">
+      <div className="relative w-[min(180px,36vw)] rotate-[4deg] animate-float rounded-md border border-line bg-surface p-3 shadow-3 [transform-origin:50%_120%] [will-change:transform]">
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}

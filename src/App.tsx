@@ -36,9 +36,10 @@ export function App() {
         className={[
           'sticky top-0 z-[var(--z-chrome)] flex items-center gap-3',
           'h-[calc(var(--header-h)+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)]',
-          /* opaque at rest for scrolled-content legibility (D-025); the blur
-             layer only softens the hairline transition */
-          'border-b border-line bg-bg supports-[backdrop-filter]:bg-bg/90 supports-[backdrop-filter]:backdrop-blur-md',
+          /* fully opaque and blur-free: backdrop-filter over scrolling content
+             recomputes the blur every frame — a measured scroll-jank source
+             (D-025 legibility retained by the solid background, D-035 perf) */
+          'border-b border-line bg-bg',
           'px-4',
         ].join(' ')}
       >
@@ -136,7 +137,7 @@ export function App() {
         className={[
           'fixed inset-x-0 bottom-0 z-[var(--z-chrome)] flex items-stretch justify-around',
           'h-[var(--tabbar-h)] pb-[env(safe-area-inset-bottom,0px)]',
-          'border-t border-line bg-surface/95 supports-[backdrop-filter]:backdrop-blur-md',
+          'border-t border-line bg-surface',
           'wide:hidden',
         ].join(' ')}
       >

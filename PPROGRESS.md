@@ -20,7 +20,9 @@ real-device testing (Tier C).
   README with deployment instructions.
 
 ## In progress
-- None. **Live photo strips shipped (Phase 20, D-034, owner-approved)**: ~3s clip per shot when
+- **Scroll-performance pass shipped (D-035)** — removed full-page grain blend + chrome
+  backdrop-blur, promoted animated layers, added content-visibility; awaiting the owner's
+  scroll feel-check on the live site. **Live photo strips shipped (Phase 20, D-034, owner-approved)**: ~3s clip per shot when
   "Live photos" is on; the Studio displays the still strip AND a live strip side by side (same
   renderer — identical frames); both save to the Gallery; live strips export as MP4
   (Download video). 65/65 tests green. Still open: iPhone re-test of the D-033 still-export fix
