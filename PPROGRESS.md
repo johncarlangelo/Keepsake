@@ -20,10 +20,11 @@ real-device testing (Tier C).
   README with deployment instructions.
 
 ## In progress
-- None. iOS export fix shipped (D-033, Phase 19.1): export pipeline is gesture-safe/synchronous
-  and iOS saves via the share sheet ("Save Image"). **Needs re-test on a real iPhone** (owner's
-  friend) — desktop re-verified, 58/58 tests green. Live Photo strips planned as Phase 20 (TODO).
-  Live at https://johncarlangelo.github.io/Keepsake/.
+- None. **Live photo strips shipped (Phase 20, D-034, owner-approved)**: ~3s clip per shot when
+  "Live photos" is on; the Studio displays the still strip AND a live strip side by side (same
+  renderer — identical frames); both save to the Gallery; live strips export as MP4
+  (Download video). 65/65 tests green. Still open: iPhone re-test of the D-033 still-export fix
+  and real-device exercise of live capture. Live at https://johncarlangelo.github.io/Keepsake/.
 
 ## Blockers & known limitations
 - **Owner's desktop "covered buttons" report** — root-caused and structurally fixed via the D-027

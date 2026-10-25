@@ -319,12 +319,15 @@ export function Sheet({
   onClose,
   children,
   closeLabel = 'Close',
+  footer,
 }: {
   open: boolean
   title: string
   onClose: () => void
   children: ReactNode
   closeLabel?: string
+  /** Pinned below the scrollable body — actions stay visible without scrolling. */
+  footer?: ReactNode
 }) {
   return (
     <Dialog.Root
@@ -345,7 +348,7 @@ export function Sheet({
           className={[
             'fixed inset-x-0 bottom-0 z-[calc(var(--z-sheet)+1)] flex max-h-[min(78dvh,720px)] flex-col',
             'rounded-t-lg bg-surface shadow-3 [transform-origin:50%_100%]',
-            'pb-[env(safe-area-inset-bottom,0px)]',
+            footer ? '' : 'pb-[env(safe-area-inset-bottom,0px)]',
             'data-[state=open]:animate-sheet-in data-[state=closed]:animate-sheet-out',
             'wide:right-6 wide:bottom-6 wide:left-auto wide:w-[400px] wide:max-h-[min(80dvh,760px)] wide:rounded-md',
           ].join(' ')}
@@ -359,7 +362,12 @@ export function Sheet({
               <IconButton icon="close" label={closeLabel} />
             </Dialog.Close>
           </div>
-          <div className="overflow-y-auto px-6 pb-6 [-webkit-overflow-scrolling:touch]">{children}</div>
+          <div className="overflow-y-auto px-6 pb-4 [-webkit-overflow-scrolling:touch]">{children}</div>
+          {footer ? (
+            <div className="shrink-0 border-t border-line bg-surface px-6 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] pt-3">
+              {footer}
+            </div>
+          ) : null}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

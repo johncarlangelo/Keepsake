@@ -1,9 +1,9 @@
 /** Export filename builder + download / Web Share helpers. */
 
-export function exportFilename(prefix = 'keepsake', date = new Date()): string {
+export function exportFilename(prefix = 'keepsake', date = new Date(), ext: 'png' | 'mp4' | 'webm' = 'png'): string {
   const p = (n: number) => String(n).padStart(2, '0')
   const stamp = `${date.getFullYear()}${p(date.getMonth() + 1)}${p(date.getDate())}-${p(date.getHours())}${p(date.getMinutes())}`
-  return `${prefix}-${stamp}.png`
+  return `${prefix}-${stamp}.${ext}`
 }
 
 /**
@@ -30,6 +30,19 @@ export async function sharePng(blob: Blob, filename: string): Promise<boolean> {
     return true
   } catch (err) {
     if ((err as DOMException)?.name === 'AbortError') return true // user closed the sheet
+    return false
+  }
+}
+
+/** Share any file (used for live clips — video mime comes from the blob). */
+export async function shareFile(blob: Blob, filename: string): Promise<boolean> {
+  try {
+    const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' })
+    if (navigator.canShare && !navigator.canShare({ files: [file] })) return false
+    await navigator.share({ files: [file], title: 'Keepsake' })
+    return true
+  } catch (err) {
+    if ((err as DOMException)?.name === 'AbortError') return true
     return false
   }
 }

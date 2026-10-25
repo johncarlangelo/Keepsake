@@ -404,3 +404,88 @@ routing — 58 total green); desktop export re-verified in-browser end-to-end. *
 UNTESTED on hardware** — needs the owner's friend to retest on the live site (VERIFY C-tier).
 **Consequences:** `canvasToPngBlob` (async) removed; share/download both gesture-safe; hint copy
 updated.
+
+## D-034 · 2026-10-25 · Live photo strips (Phase 20) — MediaRecorder capture, hold-to-replay, additive storage
+**Context:** Owner: "add a live photo in the strip just like in the physical photobooths… 3 secs
+live photo… you can see both still strips or live photo strips."
+**Decision:** A ~3s clip is recorded around each shutter press when the owner enables **Live
+photos** (start sheet chip; persisted pref `livePhoto`, default off):
+- **Capture** (`src/lib/liveclip.ts`): MediaRecorder on the raw camera stream, started when the
+  countdown begins (or at the shutter when untimed) so the clip spans anticipation + moment;
+  duration = countdown + 1.2s, or 3s flat. Codec: first supported of MP4/H.264 (iOS Safari) →
+  WebM (Chrome/Android/Firefox); feature-detected everywhere. The recorder never stops the camera
+  stream; the last shot's session keeps the camera alive until its clip finalizes; continuous
+  mode delays the next auto-shot until the clip is done.
+- **Storage** (`PhotoRecord.live?`, additive — no schema change, stills never mutated): the still
+  saves first exactly as before; the clip attaches when the recorder settles. Quota failure keeps
+  the still and toasts honestly.
+- **Viewing**: Gallery tiles show a LIVE badge; press-and-hold (280ms) replays the clip in place
+  (release stops it); the detail modal gains a Still/Live toggle with the clip size in the meta
+  line. In the Studio, press-and-hold a filled strip slot replays that photo's moment over the
+  slot. Object URLs come from the shared pool with cleanup.
+- **Export**: "Export live clips (N)" in the export sheet downloads each clip as
+  `keepsake-live-<slot>.mp4|webm`; iOS shares the first (one file per share) and hints that the
+  rest are retrievable via the Gallery.
+**Known v1 limitations (documented, honest):** clips record the unmirrored raw stream even when
+mirror-save is on (still may appear mirrored relative to the clip); MediaRecorder requires iOS
+14.5+/modern browsers (feature detected, toggle explains); live export on iOS is one-at-a-time.
+**Verified:** 6 new unit tests (64 total green); in-browser: real webm seeded via
+canvas.captureStream — badge, tile hold-play (readyState 4, clears on release), modal Still/Live
+toggle, studio slot hold-play, export button all confirmed. **Real device (iPhone/Android)
+verification still pending owner testing; NOT committed until owner confirms.**
+
+**Amendment 5 (same day, owner feedback):** saved live strips were invisible in the Gallery
+detail modal (the player's `height: 100%` collapsed against an auto-height parent — the studio's
+card had a definite height, the modal didn't) and had no download at all (Download original was
+deliberately hidden). Fixed with a definite-height modal container, and — per the owner's
+"export the live strip as mp4 or GIF, your pick" — chose **MP4**: recorded via the already-used
+MediaRecorder (a GIF encoder would be a new dependency and produce ~10× larger files),
+`renderLiveStripVideo` (lib/liveExport.ts) draws the shared renderer's still frame each rAF and
+cover-crops every slot's playing clip on top (mirrored where flagged, round-rect clipped),
+capturing 30 fps for one loop of the longest clip. Downloads as
+`keepsake-live-<stamp>.mp4` (WebM fallback where MP4 recording is unsupported); iOS shares via
+the share sheet. Verified in-browser: player visible (367×448), export produced a valid
+playable 720×880 3.5 s MP4 at ~1 MB.
+
+**Amendment 4 (same day, owner feedback — the simplification):** "why can't you just use the
+still strip's component for the live strip?" — agreed, the DOM twin was over-engineered.
+`LiveStripPlayer` now renders the live strip with the SAME `StripCanvas`/`renderComposition`
+pipeline as the still strip (identical frame, doodles, sprockets, footer text by construction)
+and simply overlays each slot's `<video>` on its `computeGeometry` rect (radius from
+`frame.slotRadius` at the measured scale). Missing clips degrade to the still showing through.
+The renderer gained `RenderOptions.date` so saved live strips stamp their own date instead of
+the view date. Card chrome (sprocket edges) matched on both studio cards. All Amendment-3 DOM
+replication removed.
+
+**Amendment 3 (same day, owner feedback):** the live strip must look IDENTICAL to the still.
+Rewrote `LiveStripPlayer` to replicate the canvas renderer exactly: square paper (no rounded
+corners), slot radius = `frame.slotRadius × min(w,h)` at the measured player scale (plus the
+frame's slot shadow and stroke), and footer text computed by the same formulas as
+`drawFooterText` (padX 4%, `min(text.size · footer.w, footer.h · 0.55)` clamp, ×0.94
+shrink-to-fit via a shared measuring context, `fontString` exported from compose as the single
+font source, mono date at `max(10, footer.h · 0.28)`, identical baselines). Captions now flow
+live from the editor into the preview. Mirroring: captures store `mirrored` (mirrorSave ×
+facing) and all clip surfaces flip to match the still — legacy records (no flag) default to
+mirrored, the selfie default. Verified: both strips measure identical px sizes, radius 0,
+matching footer font px; `scale: -1 1` on mirrored clips.
+
+**Amendment 2 (same day, owner feedback):** the owner clarified the concept — live photos belong
+to the STRIP, not individual clips. New design: the Studio displays BOTH outputs side by side
+(stacked on mobile) — the still strip (canvas, unchanged) and a **live strip** rendered by
+`LiveStripPlayer` (DOM composition: frame paper/gradient + footer text + every slot replaying its
+clip simultaneously). "Save still strip" / "Save live strip" moved OUT of the export sheet into
+the Studio (above the strips on mobile, below on desktop); the per-clip "Export live clips"
+button is gone. A saved live strip is a new additive record kind `live-strip` carrying a
+composition snapshot (template/frame/text/slot photoIds — clips remain on the capture records,
+so deleting a capture degrades that slot to a placeholder). Gallery: live strips appear in
+Finished strips with a LIVE badge and open into the player (no per-clip download; frame doodle
+decor is approximate in the DOM player — the still strip stays the print-exact artifact).
+
+**Amendment 1 (same day, owner testing):** first live session produced no visible clip. Root cause:
+in `startLiveClip`, `stop()` short-circuited to null whenever it ran before Chrome's final
+`dataavailable` event landed (a no-timeslice recorder emits nothing until stop — which is exactly
+when `stop()` is called), discarding every clip. Rewritten to settle on the `stop` event with a
+pending resolver (and an early return only after that event has actually fired); verified against
+a real MediaRecorder (MP4 in Chrome) for manual mid-recording stop, stop after the auto-timer,
+and the countdown-shaped flow — all produce non-empty clips. Owner also asked for the session
+settings in the start sheet not to side-scroll: chips now wrap (`flex-wrap`).

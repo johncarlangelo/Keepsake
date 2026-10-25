@@ -32,7 +32,8 @@ src/
     db.ts                  # IndexedDB wrapper: photos store, CRUD, estimate, persist
     images.ts              # bitmap loading, thumbs, crop-fit math, ObjectUrlPool
     prefs.ts               # localStorage settings (countdown, sound, mirror, last template)
-    share.ts               # download / Web Share / fallback detection
+    share.ts               # download / Web Share / fallback detection (gesture-safe, D-033)
+    liveclip.ts            # live-photo recorder: codec pick, duration, start/stop (D-034)
     sound.ts               # synthesized shutter & countdown beeps (WebAudio, gesture-gated)
   data/
     templates.ts           # strip layout registry (normalized geometry)

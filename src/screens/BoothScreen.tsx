@@ -1,8 +1,9 @@
 /** Booth: landing → explainer → live camera → countdown → review (PRD §5.1/§6.3–6.4). */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CameraController } from '../lib/camera'
-import { newId, putPhoto, requestPersistence, storageEstimate } from '../lib/db'
+import { getPhoto, newId, putPhoto, requestPersistence, storageEstimate } from '../lib/db'
 import { makeThumb, pooledUrl } from '../lib/images'
+import { liveClipDurationMs, pickLiveMime, startLiveClip, supportsLiveCapture, type LiveRecording } from '../lib/liveclip'
 import { sounds } from '../lib/sound'
 import { getTemplate } from '../data/templates'
 import { emptyComposition } from '../render/compose'
@@ -126,6 +127,52 @@ export function BoothScreen() {
     useCapture.getState().setTemplate(id)
   }
 
+  /* ---------- live clip recording (Phase 20, D-034) ---------- */
+
+  const recordingRef = useRef<LiveRecording | null>(null)
+  const recordingUntilRef = useRef(0)
+
+  /** Abort without saving (session ended / discarded). */
+  const cancelLiveRecording = useCallback(() => {
+    const rec = recordingRef.current
+    if (rec) {
+      recordingRef.current = null
+      rec.cancel()
+    }
+  }, [])
+
+  /** Start recording the raw camera stream so the clip spans countdown + shutter. */
+  const beginLiveRecording = useCallback(() => {
+    if (!useSettings.getState().settings.livePhoto) return
+    const stream = controllerRef.current?.cameraStream
+    if (!stream) return
+    const mime = pickLiveMime()
+    if (!mime) return
+    cancelLiveRecording()
+    const durationMs = liveClipDurationMs(useSettings.getState().settings.countdown)
+    const rec = startLiveClip(stream, mime, durationMs)
+    if (rec) {
+      recordingRef.current = rec
+      recordingUntilRef.current = Date.now() + durationMs
+    }
+  }, [cancelLiveRecording])
+
+  /** Finalize the clip and attach it to the stored photo (additive, honest failures). */
+  const settleLiveClip = useCallback(async (photoId: string): Promise<void> => {
+    const rec = recordingRef.current
+    if (!rec) return
+    recordingRef.current = null
+    const clip = await rec.stop().catch(() => null)
+    if (!clip || clip.size === 0) return
+    const stored = await getPhoto(photoId)
+    if (!stored) return
+    const res = await putPhoto({ ...stored, live: { blob: clip, mime: clip.type || rec.mime, bytes: clip.size } })
+    if (!res.ok) {
+      toast('The photo saved, but its live clip didn\'t fit in storage.', { kind: 'error' })
+    }
+  }, [])
+  useEffect(() => () => cancelLiveRecording(), [cancelLiveRecording])
+
   /* ---------- capture ---------- */
 
   const doCapture = useCallback(async () => {
@@ -146,6 +193,7 @@ export function BoothScreen() {
         bytes: blob.size,
         blob,
         thumb,
+        mirrored: settings.mirrorSave && ctrl.activeFacing === 'user',
       })
       // automatic in-app Gallery save — honest failure reporting (D-004)
       if (!result.ok) {
@@ -162,23 +210,30 @@ export function BoothScreen() {
       if (target !== null) {
         replaceShot(shot)
         setRetakeOf(null)
+        await settleLiveClip(id)
         stopCamera()
         setPhase('review')
       } else {
         pushShot(shot)
         const done = useCapture.getState().shots.length >= template.shots
         if (done) {
+          await settleLiveClip(id)
           stopCamera()
           setPhase('review')
-        } else if (useSettings.getState().settings.continuous) {
-          // continuous mode: roll straight into the next shot's countdown
-          cancelAuto()
-          autoTimerRef.current = window.setTimeout(() => {
-            autoTimerRef.current = null
-            if (useCapture.getState().phase !== 'live') return
-            if (!useSettings.getState().settings.continuous) return
-            runCaptureRef.current()
-          }, 900)
+        } else {
+          void settleLiveClip(id)
+          if (useSettings.getState().settings.continuous) {
+            // continuous mode: roll into the next countdown, but never while the
+            // live clip for this shot is still recording
+            cancelAuto()
+            const liveTail = recordingUntilRef.current - Date.now() + 150
+            autoTimerRef.current = window.setTimeout(() => {
+              autoTimerRef.current = null
+              if (useCapture.getState().phase !== 'live') return
+              if (!useSettings.getState().settings.continuous) return
+              runCaptureRef.current()
+            }, Math.max(900, liveTail))
+          }
         }
       }
       setFlash(true)
@@ -188,16 +243,18 @@ export function BoothScreen() {
     } finally {
       busyRef.current = false
     }
-  }, [pushShot, replaceShot, setPhase, settings.mirrorSave, stopCamera, template.shots])
+  }, [pushShot, replaceShot, settleLiveClip, setPhase, settings.mirrorSave, stopCamera, template.shots])
 
   const runCountdownThenCapture = useCallback(() => {
     if (countdown !== null) return
     const seconds = settings.countdown
     if (seconds === 0) {
+      beginLiveRecording()
       sounds.shutter()
       void doCapture()
       return
     }
+    beginLiveRecording()
     let n = seconds
     setCountdown(n)
     sounds.countdownTick()
@@ -218,7 +275,7 @@ export function BoothScreen() {
       }
     }
     window.setTimeout(tick, 1000)
-  }, [countdown, doCapture, settings.countdown])
+  }, [beginLiveRecording, countdown, doCapture, settings.countdown])
   runCaptureRef.current = runCountdownThenCapture
 
   /* keyboard: space to capture */
@@ -258,6 +315,7 @@ export function BoothScreen() {
 
   const discardSession = () => {
     cancelAuto()
+    cancelLiveRecording()
     stopCamera()
     endSession()
     setRetakeOf(null)
@@ -276,6 +334,7 @@ export function BoothScreen() {
           shotsTaken={retakeOf !== null ? undefined : shots.length}
           templateName={template.name}
           templateShots={template.shots}
+          liveEnabled={settings.livePhoto && supportsLiveCapture()}
           continuous={settings.continuous}
           onToggleContinuous={(v) => update({ continuous: v })}
           onShutter={runCountdownThenCapture}
@@ -375,42 +434,62 @@ export function BoothScreen() {
         </div>
       </Modal>
 
-      {/* start flow: layout choice + session settings, then the camera explainer */}
-      <Sheet open={showStart} title="Choose your layout" onClose={() => setShowStart(false)}>
-        <div className="flex flex-col gap-5">
-          <div aria-label={`Preview of ${template.name} layout`} className="flex flex-col items-center">
-            <div key={templateId} className="animate-enter flex max-h-[240px] justify-center [&>div>div>canvas]:rounded-lg [&>div>div>canvas]:shadow-1">
-              <StripCanvas comp={previewComp} images={{}} renderOpts={{ placeholder: 'sample', text: false }} maxCanvasHeight={220} />
-            </div>
-            <p className="muted mt-2 text-sm">
-              {template.name} · {template.shots} {template.shots === 1 ? 'shot' : 'shots'}
-            </p>
-          </div>
-          <TemplatePicker selectedId={templateId} onSelect={selectTemplate} images={{}} />
-          <div>
-            <p className="muted mb-2 text-sm">Session settings</p>
+      {/* start flow: layouts scroll, settings + Continue stay pinned (D-031) */}
+      <Sheet
+        open={showStart}
+        title="Choose your layout"
+        onClose={() => setShowStart(false)}
+        footer={
+          <div className="flex flex-col gap-2.5">
             <div className="flex flex-wrap gap-2">
               <Chip onClick={() => update({ countdown: settings.countdown === 0 ? 3 : settings.countdown === 3 ? 5 : 0 })}>
                 Countdown {settings.countdown === 0 ? 'off' : `${settings.countdown}s`}
               </Chip>
               <Chip onClick={() => update({ sound: !settings.sound })}>Sound {settings.sound ? 'on' : 'off'}</Chip>
-              <Chip onClick={() => update({ mirrorSave: !settings.mirrorSave })}>Mirror save {settings.mirrorSave ? 'on' : 'off'}</Chip>
+              <Chip onClick={() => update({ mirrorSave: !settings.mirrorSave })}>Mirror {settings.mirrorSave ? 'on' : 'off'}</Chip>
               <Chip active={settings.continuous} onClick={() => update({ continuous: !settings.continuous })}>
                 Continuous {settings.continuous ? 'on' : 'off'}
               </Chip>
+              <Chip active={settings.livePhoto} onClick={() => update({ livePhoto: !settings.livePhoto })}>
+                Live {settings.livePhoto ? 'on' : 'off'}
+              </Chip>
             </div>
-            <p className="muted mt-2 text-[0.8125rem]">Continuous fires every shot back-to-back — no shutter presses needed.</p>
+            <p className="muted text-xs leading-snug">
+              {settings.livePhoto
+                ? supportsLiveCapture()
+                  ? 'Each shot keeps a ~3s live clip — press and hold it in the Gallery to replay.'
+                  : 'Live clips need MediaRecorder (iOS 14.5+ or a modern browser) — unavailable here.'
+                : 'Continuous fires every shot back-to-back — no shutter presses needed.'}
+            </p>
+            <Button
+              className="sheen w-full"
+              icon="camera"
+              onClick={() => {
+                setShowStart(false)
+                setShowExplainer(true)
+              }}
+            >
+              Continue · {template.shots} {template.shots === 1 ? 'shot' : 'shots'}
+            </Button>
           </div>
-          <Button
-            className="sheen"
-            icon="camera"
-            onClick={() => {
-              setShowStart(false)
-              setShowExplainer(true)
-            }}
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <div
+            aria-label={`Preview of ${template.name} layout`}
+            className="flex items-center gap-3 rounded-md border border-line bg-surface-2/60 p-2.5"
           >
-            Continue · {template.shots} {template.shots === 1 ? 'shot' : 'shots'}
-          </Button>
+            <div key={templateId} className="animate-enter h-16 w-12 shrink-0 [&>div>div>canvas]:rounded-md">
+              <StripCanvas comp={previewComp} images={{}} renderOpts={{ placeholder: 'sample', text: false }} maxCanvasHeight={64} />
+            </div>
+            <div className="min-w-0">
+              <strong className="block text-sm">{template.name}</strong>
+              <p className="muted text-xs">
+                {template.shots} {template.shots === 1 ? 'shot' : 'shots'} · tap any layout below to preview it
+              </p>
+            </div>
+          </div>
+          <TemplatePicker selectedId={templateId} onSelect={selectTemplate} images={{}} />
         </div>
       </Sheet>
     </section>
@@ -445,6 +524,7 @@ function LiveView(props: {
   shotsTaken?: number
   templateName: string
   templateShots: number
+  liveEnabled: boolean
   continuous: boolean
   onToggleContinuous: (v: boolean) => void
   onShutter: () => void
@@ -453,7 +533,7 @@ function LiveView(props: {
   onStop: () => void
   onRetry: () => void
 }) {
-  const { videoRef, camState, countdown, flash, shotsTaken, templateName, templateShots, continuous, onToggleContinuous, onShutter, onSwitch, canSwitch, onStop, onRetry } = props
+  const { videoRef, camState, countdown, flash, shotsTaken, templateName, templateShots, liveEnabled, continuous, onToggleContinuous, onShutter, onSwitch, canSwitch, onStop, onRetry } = props
   const err = camErrorMessage(camState)
   return (
     <section aria-label="Live camera" className="animate-enter mx-auto max-w-2xl">
@@ -506,7 +586,14 @@ function LiveView(props: {
           <Icon name="close" />
         </button>
         <div className="flex-1 text-center">
-          <strong className="block text-sm">{templateName}</strong>
+          <strong className="block text-sm">
+            {templateName}
+            {liveEnabled ? (
+              <span className="ml-2 inline-flex items-center gap-1 align-middle text-[10px] font-bold tracking-widest text-rose-deep">
+                <span className="inline-block size-1.5 animate-pulse rounded-full bg-rose" aria-hidden="true" /> LIVE
+              </span>
+            ) : null}
+          </strong>
           {shotsTaken !== undefined ? (
             <span className="muted text-sm">
               {shotsTaken} / {templateShots} shots

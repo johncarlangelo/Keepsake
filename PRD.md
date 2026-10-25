@@ -37,6 +37,7 @@ All users share one expectation: **photos are kept automatically** and **nothing
 4. **Delight in the details.** Countdowns, shutter flash, film grain, playful frames — the photobooth ritual, honored.
 5. **Honest software.** Never claim a save succeeded if it failed. Never claim a platform works if it was not tested. Surface errors with recovery actions.
 6. **Extensible by design.** Filters, frames, and strip layouts are data, not hard-coded UI. New ones are added without touching the render engine.
+7. **Live photo strips (Phase 20).** Like physical photobooths: optionally record a ~3s clip around each shutter press; press-and-hold a photo in the Gallery or a strip slot in the Studio to replay the moment. Stays device-local; stills are never mutated.
 
 ## 4. User journeys
 

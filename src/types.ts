@@ -2,7 +2,7 @@
 
 /* ---------- Gallery / storage ---------- */
 
-export type PhotoKind = 'capture' | 'strip'
+export type PhotoKind = 'capture' | 'strip' | 'live-strip'
 
 export interface PhotoRecord {
   id: string
@@ -12,12 +12,38 @@ export interface PhotoRecord {
   width: number
   height: number
   bytes: number
+  /** selfie captures saved mirrored (mirrorSave) — live clips need the same flip */
+  mirrored?: boolean
   /** original JPEG (capture) or PNG (strip) */
   blob: Blob
   /** ~320px JPEG thumbnail */
   thumb: Blob
   /** template/frame label for saved strips */
   label?: string
+  /**
+   * Live-photo clip captured around the shutter (Phase 20, D-034) — additive;
+   * records without it behave exactly as before.
+   */
+  live?: {
+    blob: Blob
+    mime: string
+    bytes: number
+  }
+  /**
+   * Live strip (Phase 20, D-034): a composition snapshot whose slots replay
+   * their clips. `slots` are capture photoIds; clips stay on those records —
+   * deleting a capture degrades that slot to a still placeholder.
+   */
+  liveStrip?: LiveStripData
+}
+
+/** Snapshot of a strip composition whose slots replay their live clips. */
+export interface LiveStripData {
+  templateId: string
+  frameId: string
+  frameColor?: string | null
+  text: TextConfig
+  slots: string[]
 }
 
 export interface GalleryEntry extends PhotoRecord {
@@ -191,6 +217,8 @@ export interface AppSettings {
   mirrorSave: boolean
   /** Continuous mode: auto-fire every shot of the session without touching the shutter. */
   continuous: boolean
+  /** Live photos: record a ~3s clip around each shutter press (Phase 20, D-034). */
+  livePhoto: boolean
   lastTemplateId: string
   exportScale: 2 | 3
 }

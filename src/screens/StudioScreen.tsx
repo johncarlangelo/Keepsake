@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useEditor, endInteraction } from '../state/editor'
 import { useGallery } from '../state/gallery'
 import { useSettings } from '../state/settings'
-import { useRenderImages, StripCanvas } from '../components/StripCanvas'
+import { useLiveClips, useRenderImages, StripCanvas } from '../components/StripCanvas'
+import { LiveStripPlayer } from '../components/LiveStrip'
 import { TemplatePicker, FramePicker } from '../components/pickers'
 import { FilterPicker } from '../components/FilterPicker'
 import { StickerTray, TextPanel } from '../components/decorations'
@@ -44,6 +45,56 @@ export function StudioScreen() {
     const id = selectedSlot !== null ? photoIds[selectedSlot] : photoIds.find(Boolean)
     return id ? images[id] : undefined
   }, [images, photoIds, selectedSlot])
+  const liveClips = useLiveClips(photoIds, true)
+  const hasLive = useMemo(
+    () => (comp ? comp.slots.some((s) => s.photoId && liveClips[s.photoId!]) : false),
+    [comp, liveClips]
+  )
+  const liveStripData = useMemo(
+    () =>
+      comp
+        ? {
+            templateId: comp.templateId,
+            frameId: comp.frameId,
+            frameColor: comp.frameColor ?? null,
+            text: { ...comp.text },
+            slots: comp.slots.map((s) => s.photoId ?? ''),
+          }
+        : null,
+    [comp]
+  )
+
+  /* save the live strip as its own Gallery keepsake (still strip untouched) */
+  const saveLiveStrip = async (): Promise<void> => {
+    if (!comp || !liveStripData) return
+    setExporting(true)
+    try {
+      const canvas = renderExportCanvas(comp, images, 2)
+      const thumb = await makeThumb(canvas, 360)
+      const res = await putPhoto({
+        id: newId(),
+        kind: 'live-strip',
+        createdAt: Date.now(),
+        width: template.canvas.w,
+        height: template.canvas.h,
+        bytes: thumb.size,
+        blob: thumb,
+        thumb,
+        label: `${template.name} · ${frame.name} · live`,
+        liveStrip: liveStripData,
+      })
+      if (res.ok) {
+        toast('Live strip saved to your Gallery.')
+        void useGallery.getState().refresh()
+      } else {
+        toast('Could not save the live strip to storage.', { kind: 'error' })
+      }
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Could not save the live strip.', { kind: 'error' })
+    } finally {
+      setExporting(false)
+    }
+  }
 
   /* keyboard: undo/redo, sticker nudge/delete */
   useEffect(() => {
@@ -190,22 +241,75 @@ export function StudioScreen() {
       </div>
 
       <div className="grid min-w-0 items-start gap-4 [grid-template-columns:minmax(0,1fr)] wide:grid-cols-[minmax(0,1fr)_380px]">
-        {/* StripCanvas measures its box: the pane carries its own definite height
-            and clips overflow — nothing can ever paint over a sibling (D-027). */}
-        <div
-          key={`${comp.templateId}:${comp.frameId}`}
-          className="relative flex h-[clamp(300px,52dvh,560px)] min-w-0 justify-center overflow-hidden rounded-lg border border-line bg-surface p-3 shadow-1 wide:h-[clamp(420px,calc(100dvh-330px),760px)]"
-        >
-          {/* film sprocket edges — decorative, pointer-transparent */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-3 left-2.5 w-2 rounded-[2px] opacity-70 [background-image:repeating-linear-gradient(180deg,var(--color-surface-2)_0_7px,transparent_7px_15px)]"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-3 right-2.5 w-2 rounded-[2px] opacity-70 [background-image:repeating-linear-gradient(180deg,var(--color-surface-2)_0_7px,transparent_7px_15px)]"
-          />
-          <StripCanvas comp={comp} images={images} interactive onSlotTap={onSlotTap} />
+        <div className="flex min-w-0 flex-col gap-2.5">
+          {hasLive ? (
+            /* both outputs side by side (stacked on mobile): still + live (D-034) */
+            <div className="grid min-w-0 gap-4 wide:grid-cols-2">
+              <figure className="m-0 flex min-w-0 flex-col gap-1.5">
+                <div
+                  key={`${comp.templateId}:${comp.frameId}`}
+                  className="relative flex h-[clamp(280px,44dvh,620px)] min-w-0 justify-center overflow-hidden rounded-lg border border-line bg-surface p-3 shadow-1 wide:h-[clamp(380px,calc(100dvh-390px),700px)]"
+                >
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-3 left-2.5 w-2 rounded-[2px] opacity-70 [background-image:repeating-linear-gradient(180deg,var(--color-surface-2)_0_7px,transparent_7px_15px)]"
+                  />
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-3 right-2.5 w-2 rounded-[2px] opacity-70 [background-image:repeating-linear-gradient(180deg,var(--color-surface-2)_0_7px,transparent_7px_15px)]"
+                  />
+                  <StripCanvas comp={comp} images={images} interactive onSlotTap={onSlotTap} />
+                </div>
+                <figcaption className="muted text-center text-xs font-semibold uppercase tracking-widest">Still strip</figcaption>
+              </figure>
+              <figure className="m-0 flex min-w-0 flex-col gap-1.5">
+                <div className="relative flex h-[clamp(280px,44dvh,620px)] items-center justify-center overflow-hidden rounded-lg border border-line bg-surface p-3 shadow-1 wide:h-[clamp(380px,calc(100dvh-390px),700px)]">
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-3 left-2.5 w-2 rounded-[2px] opacity-70 [background-image:repeating-linear-gradient(180deg,var(--color-surface-2)_0_7px,transparent_7px_15px)]"
+                  />
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-3 right-2.5 w-2 rounded-[2px] opacity-70 [background-image:repeating-linear-gradient(180deg,var(--color-surface-2)_0_7px,transparent_7px_15px)]"
+                  />
+                  {liveStripData ? <LiveStripPlayer liveStrip={liveStripData} className="max-h-full" /> : null}
+                </div>
+                <figcaption className="muted text-center text-xs font-semibold uppercase tracking-widest">
+                  Live strip <span className="text-rose">✦</span>
+                </figcaption>
+              </figure>
+            </div>
+          ) : (
+            /* StripCanvas measures its box: the pane carries its own definite height
+                and clips overflow — nothing can ever paint over a sibling (D-027). */
+            <div
+              key={`${comp.templateId}:${comp.frameId}`}
+              className="relative flex h-[clamp(300px,52dvh,560px)] min-w-0 justify-center overflow-hidden rounded-lg border border-line bg-surface p-3 shadow-1 wide:h-[clamp(420px,calc(100dvh-330px),760px)]"
+            >
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-3 left-2.5 w-2 rounded-[2px] opacity-70 [background-image:repeating-linear-gradient(180deg,var(--color-surface-2)_0_7px,transparent_7px_15px)]"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-3 right-2.5 w-2 rounded-[2px] opacity-70 [background-image:repeating-linear-gradient(180deg,var(--color-surface-2)_0_7px,transparent_7px_15px)]"
+              />
+              <StripCanvas comp={comp} images={images} interactive onSlotTap={onSlotTap} />
+            </div>
+          )}
+
+          {/* gallery saves live OUTSIDE the export sheet (owner request); above the
+              strips on mobile so they are reachable without scrolling */}
+          <div className="order-first flex flex-wrap gap-2 wide:order-last">
+            <Button size="sm" variant="secondary" icon="gallery" disabled={exporting} onClick={() => void runExport('gallery')}>
+              {exporting ? 'Working…' : 'Save still strip'}
+            </Button>
+            {hasLive ? (
+              <Button size="sm" variant="secondary" icon="aperture" disabled={exporting} onClick={() => void saveLiveStrip()}>
+                {exporting ? 'Working…' : 'Save live strip'}
+              </Button>
+            ) : null}
+          </div>
         </div>
 
         <div className="min-w-0 rounded-md border border-line bg-surface p-4 shadow-1 wide:max-h-[calc(100dvh-220px)] wide:overflow-y-auto">
@@ -390,9 +494,6 @@ export function StudioScreen() {
           ) : null}
           <Button variant={canShareFiles() ? 'secondary' : 'primary'} icon="download" disabled={exporting} onClick={() => void runExport('download')}>
             {exporting ? 'Working…' : isIos() ? 'Save / Share PNG…' : 'Download PNG'}
-          </Button>
-          <Button variant="ghost" icon="gallery" disabled={exporting} onClick={() => void runExport('gallery')}>
-            Save strip to Gallery
           </Button>
         </div>
         <p className="muted mt-3 text-sm">{platformSaveHint(navigator.userAgent)}</p>

@@ -1,16 +1,20 @@
 /** Gallery: browse, preview, select, delete, reuse into Studio (PRD §5.2). */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useGallery } from '../state/gallery'
 import { emptyComposition } from '../render/compose'
 import { TEMPLATES } from '../data/templates'
 import { useEditor } from '../state/editor'
 import { navigate } from '../route'
-import { Button, Chip, ConfirmDialog, EmptyState, IconButton, Modal, Sheet } from '../components/ui'
+import { Button, Chip, ConfirmDialog, EmptyState, IconButton, Modal, Segmented, Sheet } from '../components/ui'
 import { Icon } from '../components/icons'
+import { cn } from '../lib/cn'
 import { SectionHeading } from '../components/showcase'
+import { LiveStripPlayer } from '../components/LiveStrip'
+import { useLiveClips, useRenderImages } from '../components/StripCanvas'
+import { renderLiveStripVideo } from '../lib/liveExport'
 import { pooledUrl, revokeUrl } from '../lib/images'
 import { getPhoto } from '../lib/db'
-import { downloadBlob, exportFilename } from '../lib/share'
+import { downloadBlob, exportFilename, isIos, shareFile } from '../lib/share'
 import { toast } from '../state/toast'
 import type { GalleryEntry } from '../types'
 
@@ -32,7 +36,7 @@ export function GalleryScreen() {
   }, [refresh])
 
   const detail = entries.find((e) => e.id === detailId) ?? null
-  const strips = entries.filter((e) => e.kind === 'strip')
+  const strips = entries.filter((e) => e.kind === 'strip' || e.kind === 'live-strip')
   const captures = entries.filter((e) => e.kind === 'capture')
 
   const createStrip = () => {
@@ -247,17 +251,57 @@ function GalleryTile({
   onOpen: () => void
   onToggle: () => void
 }) {
+  /* live photos: press-and-hold replays the ~3s moment (Phase 20, D-034) */
+  const [playUrl, setPlayUrl] = useState<string | null>(null)
+  const holdRef = useRef<number | null>(null)
+
+  const endHold = () => {
+    if (holdRef.current !== null) {
+      window.clearTimeout(holdRef.current)
+      holdRef.current = null
+    }
+    setPlayUrl((u) => {
+      if (u) revokeUrl(u)
+      return null
+    })
+  }
+  const startHold = () => {
+    if (!entry.live || selectMode || holdRef.current !== null) return
+    holdRef.current = window.setTimeout(() => {
+      holdRef.current = null
+      setPlayUrl(pooledUrl(entry.live!.blob))
+    }, 280)
+  }
+  useEffect(() => endHold, [])
+
+  const liveBadge = entry.live || entry.kind === 'live-strip' ? (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-[999px] bg-ink/85 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-bg"
+    >
+      <span className="inline-block size-1 rounded-full bg-rose-soft" /> LIVE
+    </span>
+  ) : null
+
   return (
     <button
       aria-pressed={selectMode ? selected : undefined}
       aria-label={
         selectMode
           ? `${selected ? 'Deselect' : 'Select'} ${variant === 'strip' ? 'finished strip' : 'photo'} from ${new Date(entry.createdAt).toLocaleDateString()}`
-          : `Open ${variant === 'strip' ? 'finished strip' : 'photo'} from ${new Date(entry.createdAt).toLocaleDateString()}`
+          : entry.live
+            ? `Open photo from ${new Date(entry.createdAt).toLocaleDateString()} — press and hold to play its live moment`
+            : `Open ${variant === 'strip' ? 'finished strip' : 'photo'} from ${new Date(entry.createdAt).toLocaleDateString()}`
       }
       onClick={selectMode ? onToggle : onOpen}
+      onPointerDown={startHold}
+      onPointerUp={endHold}
+      onPointerLeave={endHold}
+      onPointerCancel={endHold}
+      onContextMenu={(e) => entry.live && e.preventDefault()}
       className={[
-        'group relative overflow-hidden rounded-md border border-line bg-surface-2 shadow-1',
+        'group relative select-none overflow-hidden rounded-md border border-line bg-surface-2 shadow-1',
+        '[-webkit-touch-callout:none] [-webkit-user-select:none] [touch-action:manipulation]',
         'transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-0.5 hover:shadow-2',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
         'aria-pressed:border-rose-deep aria-pressed:ring-2 aria-pressed:ring-rose-deep',
@@ -273,16 +317,22 @@ function GalleryTile({
       ) : (
         <img src={entry.thumbUrl} alt="" loading="lazy" className="w-full" />
       )}
+      {playUrl ? (
+        <video src={playUrl} autoPlay loop muted playsInline className={cn('absolute inset-0 size-full object-cover', (entry.mirrored ?? true) && '-scale-x-100')} />
+      ) : null}
+      {liveBadge}
     </button>
   )
 }
 
 function GalleryDetail({ entry, onClose, onDelete }: { entry: GalleryEntry | null; onClose: () => void; onDelete: (id: string) => void }) {
   const [fullUrl, setFullUrl] = useState<string | null>(null)
+  const [showLive, setShowLive] = useState(false)
 
   useEffect(() => {
     let url: string | null = null
     let alive = true
+    setShowLive(false)
     if (entry) {
       void getPhoto(entry.id).then((rec) => {
         if (!alive || !rec) return
@@ -297,17 +347,76 @@ function GalleryDetail({ entry, onClose, onDelete }: { entry: GalleryEntry | nul
     }
   }, [entry])
 
+  /* live clip object URL — created only while the live view is shown */
+  const [liveUrl, setLiveUrl] = useState<string | null>(null)
+  useEffect(() => {
+    if (!entry?.live || !showLive) {
+      setLiveUrl(null)
+      return
+    }
+    const url = pooledUrl(entry.live.blob)
+    setLiveUrl(url)
+    return () => revokeUrl(url)
+  }, [entry, showLive])
+
+  const isLiveStrip = entry?.kind === 'live-strip' && !!entry.liveStrip
+
+  /* clip + still sources for the live strip player and its video export */
+  const liveSlots = entry?.liveStrip?.slots ?? []
+  const liveClips = useLiveClips(liveSlots, isLiveStrip)
+  const liveImages = useRenderImages(liveSlots)
+  const [exportingVideo, setExportingVideo] = useState(false)
+  const exportVideo = async (): Promise<void> => {
+    if (!entry?.liveStrip) return
+    setExportingVideo(true)
+    try {
+      const { blob, ext } = await renderLiveStripVideo(entry.liveStrip, liveClips, liveImages)
+      const name = exportFilename('keepsake-live', new Date(entry.createdAt), ext)
+      if (isIos()) {
+        const ok = await shareFile(blob, name)
+        if (!ok) toast('Sharing was not available — try again or check permissions.', { kind: 'error' })
+      } else {
+        downloadBlob(blob, name)
+        toast('Live strip video saved.')
+      }
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Could not export the live strip video.', { kind: 'error' })
+    } finally {
+      setExportingVideo(false)
+    }
+  }
+
   if (!entry) return null
   return (
-    <Modal open={!!entry} title={entry.kind === 'strip' ? 'Saved strip' : 'Photo'} onClose={onClose}>
+    <Modal open={!!entry} title={entry.kind === 'live-strip' ? 'Live strip' : entry.kind === 'strip' ? 'Saved strip' : 'Photo'} onClose={onClose}>
       <div className="flex flex-col items-center gap-3">
-        {fullUrl ? (
+        {entry.live && !isLiveStrip ? (
+          <div className="flex justify-center">
+            <Segmented
+              label="Photo view"
+              value={showLive ? 'live' : 'still'}
+              onChange={(v) => setShowLive(v === 'live')}
+              options={[
+                { value: 'still', label: 'Still' },
+                { value: 'live', label: 'Live ✦' },
+              ]}
+            />
+          </div>
+        ) : null}
+        {isLiveStrip ? (
+          <div className="flex h-[min(56dvh,600px)] w-full items-center justify-center">
+            <LiveStripPlayer liveStrip={entry.liveStrip!} date={new Date(entry.createdAt)} />
+          </div>
+        ) : showLive && liveUrl ? (
+          <video src={liveUrl} autoPlay loop muted playsInline controls className={cn('max-h-[52dvh] w-auto rounded-sm', (entry.mirrored ?? true) && '-scale-x-100')} />
+        ) : fullUrl ? (
           <img src={fullUrl} alt={entry.label ?? 'Gallery photo'} className="max-h-[52dvh] w-auto rounded-sm object-contain" />
         ) : (
           <div className="muted grid h-50 place-items-center text-sm">Loading…</div>
         )}
         <p className="muted text-center font-mono text-[0.8125rem]">
           {new Date(entry.createdAt).toLocaleString()} · {entry.width}×{entry.height} · {formatBytes(entry.bytes)}
+          {entry.live ? ` · live ${formatBytes(entry.live.bytes)}` : ''}
           {entry.label ? ` · ${entry.label}` : ''}
         </p>
         {entry.corrupt ? (
@@ -316,7 +425,11 @@ function GalleryDetail({ entry, onClose, onDelete }: { entry: GalleryEntry | nul
           </p>
         ) : null}
         <div className="mt-1 flex flex-wrap justify-center gap-2">
-          {fullUrl ? (
+          {isLiveStrip ? (
+            <Button size="sm" variant="secondary" icon="download" disabled={exportingVideo} onClick={() => void exportVideo()}>
+              {exportingVideo ? 'Recording…' : 'Download video'}
+            </Button>
+          ) : fullUrl ? (
             <Button size="sm" variant="secondary" icon="download" onClick={() => void downloadFromUrl(fullUrl!, entry)}>
               Download original
             </Button>

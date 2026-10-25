@@ -35,6 +35,10 @@ export class CameraController {
   get streamActive(): boolean {
     return this.stream?.active ?? false
   }
+  /** Raw camera stream — used by the live-photo recorder (Phase 20, D-034). */
+  get cameraStream(): MediaStream | null {
+    return this.stream
+  }
 
   onState(fn: Listener): () => void {
     this.listeners.add(fn)

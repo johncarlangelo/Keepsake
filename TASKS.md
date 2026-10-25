@@ -87,6 +87,8 @@ Statuses: `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`. Acceptance criteria re
 ## Phase 18 — Booth flow rework & capture modes — DONE (2026-10-25, D-031)
 - [x] **T18.1** Layout selection moved into a "Choose your layout" start sheet (Start the Booth →
       layout + session settings → camera explainer); landing picker removed, CTA band added.
+      Refined after owner feedback: session settings + Continue live in a pinned sheet footer
+      (Sheet gained a `footer` prop) so no scrolling is needed to reach them.
 - [x] **T18.2** Dead X button root-caused (dialog rendered on landing branch only) and fixed by
       rendering the discard dialog in every phase branch.
 - [x] **T18.3** Manual/Continuous capture toggle in the live view; continuous auto-fires each
@@ -98,21 +100,25 @@ Statuses: `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`. Acceptance criteria re
 - [x] **T19.2** `.github/workflows/deploy.yml` added (build + upload-artifact + deploy-pages);
       site live at https://johncarlangelo.github.io/Keepsake/.
 
-## Phase 20 — Live Photo strips — TODO (owner-requested 2026-10-25; not started)
+## Phase 20 — Live Photo strips — DONE (2026-10-25, D-034; owner tested and approved for push)
 Physical photobooths print a still but let you relive the moment; Keepsake should too.
-- [ ] **T20.1** Scope & spike: capture a ~3s clip per slot alongside the still (MediaRecorder —
-      check iOS Safari support and codec/MP4 constraints; fallback = rapid frame burst). Decide
-      storage shape (IndexedDB record gains a `live` field: video blob or frame sequence; size
-      budget per strip).
-- [ ] **T20.2** Capture UX: optional "Live" toggle in the booth (per session, like countdown);
-      recording runs during the countdown window so the still and the live moment align.
-- [ ] **T20.3** View UX: in Gallery/Studio, press-and-hold a strip slot (or tap a play badge) to
-      play the 3s live moment for that photo — mirroring physical live-photo behavior. Strips
-      without live data behave exactly as today.
-- [ ] **T20.4** Export: still PNG unchanged; add optional export of the live pair (video file
-      named to match the PNG). Never mutates or deletes stills; live data is additive.
-- [ ] **T20.5** Privacy unchanged: clips stay in IndexedDB, never uploaded; quota warnings surface
-      (video is heavy — storage meter must account for it).
+- [x] **T20.1** Spike + storage shape: MediaRecorder (MP4 for iOS → WebM fallback, feature
+      detected); `PhotoRecord.live?` additive field; recorder never stops the camera stream.
+- [x] **T20.2** Capture UX: "Live photos" chip in the start sheet (persisted pref, default off);
+      clip spans countdown + shutter (countdown + 1.2s, or 3s untimed); last shot delays camera
+      stop; continuous mode serializes on recording.
+- [x] **T20.3** View UX (reworked per owner: strips, not individual clips): Studio shows BOTH
+      outputs — still strip + `LiveStripPlayer` live strip; live strips save to the Gallery as
+      `live-strip` records and open in the player from Finished strips (LIVE badge). Gallery
+      tiles keep press-and-hold replay for individual captures.
+- [x] **T20.4** Saves moved out of the export sheet (owner request): "Save still strip" / "Save
+      live strip" sit in the Studio (above strips on mobile, below on desktop); export sheet keeps
+      Share/Download PNG only. Stills never mutated; live data additive.
+- [x] **T20.5** Privacy/quota: clips stay in IndexedDB; quota failure keeps the still + honest
+      toast; storage meter reflects clips automatically (usage-based estimate).
+- [x] **T20.6** Owner tested in-browser and approved push (2026-10-25). Known v1 limits: real-
+      device (iPhone/Android) capture still to be exercised; clips of selfie sessions match the
+      mirrored stills; iOS video export is one-at-a-time via the share sheet.
 
 ## Open follow-ups (not blockers)
 - Tier C device testing (VERIFY C1–C6) when hardware available — required before claiming any

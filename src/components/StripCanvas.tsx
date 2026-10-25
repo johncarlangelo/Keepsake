@@ -5,7 +5,7 @@ import { computeGeometry, renderComposition, type RenderImage, type RenderOption
 import { getTemplate } from '../data/templates'
 import { endInteraction, useEditor } from '../state/editor'
 import { getPhoto } from '../lib/db'
-import { getBitmap } from '../lib/images'
+import { getBitmap, pooledUrl, revokeUrl } from '../lib/images'
 import { Icon } from './icons'
 
 const MAX_RENDER_W = 1400
@@ -37,6 +37,7 @@ export function StripCanvas({
   const [box, setBox] = useState({ w: 0, h: 0 })
   const [fontsReady, setFontsReady] = useState(false)
   const { selectedSlot, selectedSticker, selectSlot, selectSticker, updateSticker, beginInteraction } = useEditor()
+  const liveClips = useLiveClips(interactive ? comp.slots.map((s) => s.photoId) : [], interactive)
 
   useEffect(() => {
     let alive = true
@@ -97,6 +98,7 @@ export function StripCanvas({
       onStickerSelect={selectSticker}
       onStickerDrag={updateSticker}
       beginInteraction={beginInteraction}
+      liveClips={liveClips}
     />
   ) : null
 
@@ -131,6 +133,7 @@ function StripOverlay({
   onStickerSelect,
   onStickerDrag,
   beginInteraction,
+  liveClips,
 }: {
   comp: Composition
   geo: OverlayGeo | null
@@ -140,8 +143,30 @@ function StripOverlay({
   onStickerSelect: (uid: string | null) => void
   onStickerDrag: (uid: string, patch: Partial<PlacedSticker>) => void
   beginInteraction: () => void
+  liveClips: ReturnType<typeof useLiveClips>
 }) {
   const dragRef = useRef<{ uid: string; offX: number; offY: number } | null>(null)
+  /* live photos: press-and-hold a filled slot to replay its moment (D-034) */
+  const [playSlot, setPlaySlot] = useState<number | null>(null)
+  const holdRef = useRef<number | null>(null)
+  const suppressClickRef = useRef(false)
+
+  const endHold = () => {
+    if (holdRef.current !== null) {
+      window.clearTimeout(holdRef.current)
+      holdRef.current = null
+    }
+    setPlaySlot(null)
+  }
+  const startSlotHold = (i: number) => {
+    const photoId = comp.slots[i]?.photoId
+    if (!photoId || !liveClips[photoId] || holdRef.current !== null) return
+    holdRef.current = window.setTimeout(() => {
+      holdRef.current = null
+      suppressClickRef.current = true
+      setPlaySlot(i)
+    }, 280)
+  }
 
   if (!geo) return null
 
@@ -203,7 +228,20 @@ function StripOverlay({
           <button
             key={i}
             aria-label={isEmpty ? `Empty slot ${i + 1}, add a photo` : `Photo slot ${i + 1}, select to edit`}
-            onClick={() => onSlotTap(selected ? null : i)}
+            onClick={() => {
+              if (suppressClickRef.current) {
+                suppressClickRef.current = false
+                return
+              }
+              onSlotTap(selected ? null : i)
+            }}
+            onPointerDown={() => startSlotHold(i)}
+            onPointerUp={endHold}
+            onPointerLeave={endHold}
+            onPointerCancel={endHold}
+            onContextMenu={(e) => {
+              if (liveClips[slot?.photoId ?? '']) e.preventDefault()
+            }}
             style={{
               position: 'absolute',
               left: pct(r.x, geo.W),
@@ -238,6 +276,18 @@ function StripOverlay({
                 <Icon name="plus" size={22} />
               </span>
             ) : null}
+            {playSlot === i && slot?.photoId && liveClips[slot.photoId] ? (
+              <video
+                src={liveClips[slot.photoId]!.url}
+                autoPlay
+                loop
+                muted
+                playsInline
+                aria-hidden="true"
+                className={liveClips[slot.photoId]!.mirrored ? '-scale-x-100' : ''}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }}
+              />
+            ) : null}
           </button>
         )
       })}
@@ -265,6 +315,46 @@ function StripOverlay({
       })()}
     </div>
   )
+}
+
+
+/** Load live-photo clips for the given photoIds (only when the overlay is interactive).
+ *  `mirrored`: records saved before the flag existed are treated as mirrored
+ *  (mirrorSave defaults on for selfies) so clips match their stills. */
+export function useLiveClips(
+  photoIds: Array<string | null>,
+  enabled: boolean
+): Record<string, { url: string; blob: Blob; mime: string; mirrored: boolean }> {
+  const [clips, setClips] = useState<Record<string, { url: string; blob: Blob; mime: string; mirrored: boolean }>>({})
+  const key = photoIds.filter(Boolean).join(',') || 'none'
+  useEffect(() => {
+    if (!enabled || key === 'none') {
+      setClips({})
+      return
+    }
+    let alive = true
+    const urls: string[] = []
+    void (async () => {
+      const out: Record<string, { url: string; blob: Blob; mime: string; mirrored: boolean }> = {}
+      for (const id of key.split(',')) {
+        try {
+          const rec = await getPhoto(id)
+          if (!rec?.live) continue
+          const url = pooledUrl(rec.live.blob)
+          urls.push(url)
+          out[id] = { url, blob: rec.live.blob, mime: rec.live.mime, mirrored: rec.mirrored ?? true }
+        } catch {
+          /* missing photo → no live clip */
+        }
+      }
+      if (alive) setClips(out)
+    })()
+    return () => {
+      alive = false
+      for (const u of urls) revokeUrl(u)
+    }
+  }, [enabled, key])
+  return clips
 }
 
 /** Resolve RenderImage map for the photoIds used by a composition (LRU-backed). */

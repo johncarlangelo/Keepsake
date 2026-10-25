@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   sound: true,
   mirrorSave: true,
   continuous: false,
+  livePhoto: false,
   lastTemplateId: 'classic-4',
   exportScale: 2,
 }
@@ -37,6 +38,7 @@ function sanitized(p: Partial<AppSettings>): Partial<AppSettings> {
   if (typeof p.sound === 'boolean') out.sound = p.sound
   if (typeof p.mirrorSave === 'boolean') out.mirrorSave = p.mirrorSave
   if (typeof p.continuous === 'boolean') out.continuous = p.continuous
+  if (typeof p.livePhoto === 'boolean') out.livePhoto = p.livePhoto
   if (typeof p.lastTemplateId === 'string') out.lastTemplateId = p.lastTemplateId
   if (p.exportScale === 2 || p.exportScale === 3) out.exportScale = p.exportScale
   return out

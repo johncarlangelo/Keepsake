@@ -38,7 +38,7 @@ export function emptySlot(photoId: string | null): SlotEdit {
   return { photoId, filterId: null, intensity: 1, crop: { zoom: 1, x: 0, y: 0 }, flip: false }
 }
 
-function fontString(kind: TextConfig['font'], px: number): string {
+export function fontString(kind: TextConfig['font'], px: number): string {
   switch (kind) {
     case 'script':
       // Caveat has a small x-height; nudge it up so script captions read at the same size
@@ -52,7 +52,7 @@ function fontString(kind: TextConfig['font'], px: number): string {
   }
 }
 
-function formatDate(d = new Date()): string {
+export function formatDate(d = new Date()): string {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
@@ -88,6 +88,8 @@ export interface RenderOptions {
   placeholder?: 'subtle' | 'sample'
   /** draw caption/date in the footer band (false for tiny previews where text is noise) */
   text?: boolean
+  /** date stamped in the footer (defaults to now; saved keepsakes pass their own) */
+  date?: Date
 }
 
 const SAMPLE_FILLS = ['#E5C9BC', '#D7DECB', '#EBDFC2', '#D8CBDD', '#E9D4C9', '#CFD9D4']
@@ -183,7 +185,7 @@ export function renderComposition(
   // 4. caption / date in footer band
   if (geo.footer && text) {
     const textColor = comp.text.color === AUTO_TEXT_COLOR ? frame.footerStyle?.color ?? '#2B2118' : comp.text.color
-    drawFooterText(ctx, geo.footer, comp.text, textColor)
+    drawFooterText(ctx, geo.footer, comp.text, textColor, opts.date)
   }
 
   // 5. stickers on top
@@ -202,7 +204,7 @@ export function renderComposition(
   }
 }
 
-function drawFooterText(ctx: CanvasRenderingContext2D, footer: Rect, text: TextConfig, color: string): void {
+function drawFooterText(ctx: CanvasRenderingContext2D, footer: Rect, text: TextConfig, color: string, date: Date = new Date()): void {
   const caption = text.caption.trim()
   if (!caption && !text.showDate) return
 
@@ -214,7 +216,7 @@ function drawFooterText(ctx: CanvasRenderingContext2D, footer: Rect, text: TextC
   ctx.textAlign = text.align === 'center' ? 'center' : text.align
   ctx.textBaseline = 'middle'
 
-  const dateStr = text.showDate ? formatDate() : ''
+  const dateStr = text.showDate ? formatDate(date) : ''
   const datePx = Math.max(10, footer.h * 0.28)
 
   if (caption) {
