@@ -34,7 +34,7 @@ describe('export helpers (VERIFY A9)', () => {
   })
 
   it('gives platform-appropriate save hints', () => {
-    expect(platformSaveHint('Mozilla/5.0 (iPhone)')).toMatch(/Add to Photos/i)
+    expect(platformSaveHint('Mozilla/5.0 (iPhone)')).toMatch(/Save Image/i)
     expect(platformSaveHint('Mozilla/5.0 (Android)')).toMatch(/Share/i)
     expect(platformSaveHint('Mozilla/5.0 (Windows NT)')).toMatch(/Downloads folder/i)
   })

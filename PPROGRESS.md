@@ -20,9 +20,10 @@ real-device testing (Tier C).
   README with deployment instructions.
 
 ## In progress
-- None. **Deployed to GitHub Pages** (D-032, Phase 19, owner-approved): every push to main ships
-  via deploy.yml; live at https://johncarlangelo.github.io/Keepsake/. Tier C device testing on
-  the live URL remains the open follow-up (VERIFY C1–C6).
+- None. iOS export fix shipped (D-033, Phase 19.1): export pipeline is gesture-safe/synchronous
+  and iOS saves via the share sheet ("Save Image"). **Needs re-test on a real iPhone** (owner's
+  friend) — desktop re-verified, 58/58 tests green. Live Photo strips planned as Phase 20 (TODO).
+  Live at https://johncarlangelo.github.io/Keepsake/.
 
 ## Blockers & known limitations
 - **Owner's desktop "covered buttons" report** — root-caused and structurally fixed via the D-027

@@ -12,8 +12,8 @@ import { Icon } from '../components/icons'
 import { getTemplate } from '../data/templates'
 import { getFrame } from '../data/frames'
 import { renderExportCanvas } from '../render/compose'
-import { canvasToPngBlob } from '../lib/share'
-import { canShareFiles, downloadBlob, exportFilename, platformSaveHint, sharePng } from '../lib/share'
+import { canvasToPngSync, isIos, savePngFromBlob } from '../lib/share'
+import { canShareFiles, exportFilename, platformSaveHint, sharePng } from '../lib/share'
 import { makeThumb } from '../lib/images'
 import { newId, putPhoto } from '../lib/db'
 import { navigate } from '../route'
@@ -114,11 +114,14 @@ export function StudioScreen() {
   const runExport = async (mode: 'share' | 'download' | 'gallery'): Promise<void> => {
     setExporting(true)
     try {
-      const canvas = await renderExportCanvas(comp, images, settings.exportScale)
-      const blob = await canvasToPngBlob(canvas)
+      /* Everything from here to the share/download call must stay SYNCHRONOUS:
+         iOS Safari expires the tap's user activation across awaits, which is
+         why exports silently failed on iPhone (D-033). */
+      const canvas = renderExportCanvas(comp, images, settings.exportScale)
+      const blob = canvasToPngSync(canvas)
       if (mode === 'download') {
-        downloadBlob(blob, exportFilename())
-        toast('Saved to your downloads.')
+        const result = savePngFromBlob(blob, exportFilename())
+        toast(result === 'shared' ? 'Sharing open — choose "Save Image" to keep it in Photos.' : 'Saved to your downloads.')
       } else if (mode === 'share') {
         const ok = await sharePng(blob, exportFilename())
         if (!ok) toast('Sharing was not available — try Download instead.', { kind: 'error' })
@@ -386,7 +389,7 @@ export function StudioScreen() {
             </Button>
           ) : null}
           <Button variant={canShareFiles() ? 'secondary' : 'primary'} icon="download" disabled={exporting} onClick={() => void runExport('download')}>
-            {exporting ? 'Working…' : 'Download PNG'}
+            {exporting ? 'Working…' : isIos() ? 'Save / Share PNG…' : 'Download PNG'}
           </Button>
           <Button variant="ghost" icon="gallery" disabled={exporting} onClick={() => void runExport('gallery')}>
             Save strip to Gallery

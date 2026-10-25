@@ -98,6 +98,22 @@ Statuses: `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`. Acceptance criteria re
 - [x] **T19.2** `.github/workflows/deploy.yml` added (build + upload-artifact + deploy-pages);
       site live at https://johncarlangelo.github.io/Keepsake/.
 
+## Phase 20 — Live Photo strips — TODO (owner-requested 2026-10-25; not started)
+Physical photobooths print a still but let you relive the moment; Keepsake should too.
+- [ ] **T20.1** Scope & spike: capture a ~3s clip per slot alongside the still (MediaRecorder —
+      check iOS Safari support and codec/MP4 constraints; fallback = rapid frame burst). Decide
+      storage shape (IndexedDB record gains a `live` field: video blob or frame sequence; size
+      budget per strip).
+- [ ] **T20.2** Capture UX: optional "Live" toggle in the booth (per session, like countdown);
+      recording runs during the countdown window so the still and the live moment align.
+- [ ] **T20.3** View UX: in Gallery/Studio, press-and-hold a strip slot (or tap a play badge) to
+      play the 3s live moment for that photo — mirroring physical live-photo behavior. Strips
+      without live data behave exactly as today.
+- [ ] **T20.4** Export: still PNG unchanged; add optional export of the live pair (video file
+      named to match the PNG). Never mutates or deletes stills; live data is additive.
+- [ ] **T20.5** Privacy unchanged: clips stay in IndexedDB, never uploaded; quota warnings surface
+      (video is heavy — storage meter must account for it).
+
 ## Open follow-ups (not blockers)
 - Tier C device testing (VERIFY C1–C6) when hardware available — required before claiming any
   platform as verified.

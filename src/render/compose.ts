@@ -234,8 +234,12 @@ function drawFooterText(ctx: CanvasRenderingContext2D, footer: Rect, text: TextC
   ctx.restore()
 }
 
-/** Render at export scale to an offscreen canvas → PNG blob. */
-export async function renderExportCanvas(comp: Composition, images: Record<string, RenderImage | undefined>, scale: 2 | 3): Promise<HTMLCanvasElement> {
+/**
+ * Render at export scale to an offscreen canvas. Fully synchronous: the export
+ * click handler must reach the share/download call before iOS Safari expires
+ * the tap's user activation (D-033) — no awaits before saving.
+ */
+export function renderExportCanvas(comp: Composition, images: Record<string, RenderImage | undefined>, scale: 2 | 3): HTMLCanvasElement {
   const template = getTemplate(comp.templateId)
   const canvas = document.createElement('canvas')
   renderComposition(canvas, comp, images, template.canvas.w * scale)

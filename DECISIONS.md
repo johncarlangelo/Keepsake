@@ -382,3 +382,25 @@ https://johncarlangelo.github.io/Keepsake/.
 picked Pages); modifying ci.yml to deploy (forbidden split of concerns — CI gates, deploy ships).
 **Consequences:** every push to main ships if CI-shaped checks in deploy are green (deploy builds
 independently; ci.yml remains the gate); HTTPS enforced by GitHub (camera access requires it).
+
+## D-033 · 2026-10-25 · iOS export fix: gesture-safe synchronous pipeline + share-sheet saving
+**Context:** Owner's friend could not download the exported strip on iPhone Safari (fine on
+Android/desktop). Root cause: `runExport` awaited canvas rendering AND `canvas.toBlob` before the
+programmatic `<a download>` click. iOS Safari expires a tap's transient user activation across
+async boundaries far more strictly than Chrome, so by the time the anchor clicked, the gesture was
+dead — the download was silently dropped (or the blob opened in a tab). `<a download>` with blob
+URLs is additionally unreliable on iOS; the platform-idiomatic save is the Web Share sheet
+("Save to Photos"), which itself requires live user activation.
+**Decision:** The export pipeline is now fully synchronous from the click: `renderExportCanvas`
+(sync — it always was internally) → `canvasToPngSync` (canvas.toDataURL + dataUrlToBlob, no
+awaits) → save. Routing lives in `savePngFromBlob`: iOS (incl. iPadOS desktop-mode Macintosh UA,
+detected via maxTouchPoints) + canShare(files) → navigator.share fired inside the activation
+window; everything else keeps the anchor download. Button label on iOS reads "Save / Share PNG…"
+and the success toast names "Save Image". PNG encoding via toDataURL costs the same CPU as
+toBlob, just synchronously. Chrome/Android paths unchanged (verified: toast + blob URL still
+fired on desktop).
+**Verified:** 4 new unit tests (isIos iPadOS case, dataUrlToBlob, share-sheet routing, fallback
+routing — 58 total green); desktop export re-verified in-browser end-to-end. **iOS itself remains
+UNTESTED on hardware** — needs the owner's friend to retest on the live site (VERIFY C-tier).
+**Consequences:** `canvasToPngBlob` (async) removed; share/download both gesture-safe; hint copy
+updated.
