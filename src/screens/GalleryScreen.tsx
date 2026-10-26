@@ -10,6 +10,7 @@ import { Icon } from '../components/icons'
 import { cn } from '../lib/cn'
 import { SectionHeading } from '../components/showcase'
 import { LiveStripPlayer } from '../components/LiveStrip'
+import { AlbumBook } from '../components/AlbumBook'
 import { useLiveClips, useRenderImages } from '../components/StripCanvas'
 import { renderLiveStripVideo } from '../lib/liveExport'
 import { pooledUrl, revokeUrl } from '../lib/images'
@@ -30,6 +31,7 @@ export function GalleryScreen() {
   const [confirmDelete, setConfirmDelete] = useState<string[] | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
   const [showStorageInfo, setShowStorageInfo] = useState(false)
+  const [view, setView] = useState<'grid' | 'album'>('grid')
 
   useEffect(() => {
     void refresh()
@@ -62,6 +64,20 @@ export function GalleryScreen() {
       </div>
 
       <StorageMeterLine estimate={estimate} persisted={persisted} />
+
+      {entries.length > 0 && !storageUnavailable ? (
+        <div className="mb-4">
+          <Segmented
+            label="Gallery view"
+            value={view}
+            onChange={(v) => setView(v as 'grid' | 'album')}
+            options={[
+              { value: 'grid', label: 'Grid' },
+              { value: 'album', label: 'Album' },
+            ]}
+          />
+        </div>
+      ) : null}
 
       {storageUnavailable ? (
         <div role="alert" className="rounded-md border border-gold bg-surface p-4 shadow-1">
@@ -105,6 +121,13 @@ export function GalleryScreen() {
             Take your first strip
           </Button>
         </EmptyState>
+      ) : view === 'album' && strips.length > 0 ? (
+        <section aria-label="Strip album" className="animate-enter">
+          <AlbumBook entries={strips} />
+          <p className="muted mt-3 text-center text-xs">
+            tap a page corner or use the arrows to flip · live strips play while their page is open
+          </p>
+        </section>
       ) : (
         <>
           <section aria-label="Finished strips" className="mb-8">
@@ -152,7 +175,7 @@ export function GalleryScreen() {
         </>
       )}
 
-      {selectMode && entries.length > 0 ? (
+      {view === 'grid' && selectMode && entries.length > 0 ? (
         <div className="mt-4 flex flex-wrap items-center gap-2 rounded-md border border-line bg-surface p-3 shadow-1">
           <strong className="text-sm">{selected.length} selected</strong>
           <span className="flex-1" />
