@@ -20,13 +20,15 @@ real-device testing (Tier C).
   README with deployment instructions.
 
 ## In progress
-- **Scroll-performance pass shipped (D-035)** — removed full-page grain blend + chrome
-  backdrop-blur, promoted animated layers, added content-visibility; awaiting the owner's
-  scroll feel-check on the live site. **Live photo strips shipped (Phase 20, D-034, owner-approved)**: ~3s clip per shot when
-  "Live photos" is on; the Studio displays the still strip AND a live strip side by side (same
-  renderer — identical frames); both save to the Gallery; live strips export as MP4
-  (Download video). 65/65 tests green. Still open: iPhone re-test of the D-033 still-export fix
-  and real-device exercise of live capture. Live at https://johncarlangelo.github.io/Keepsake/.
+- None. All requested features shipped and owner-approved:
+  **3D flip album (Phase 22)** — Gallery Grid/Album segment; saved strips and live strips become
+  pages of a CSS-3D flipbook (drag/click/keyboard flips, live strips play while open,
+  reduced-motion fallback, zero new dependencies). **Live photo strips + MP4 export (Phase 20,
+  D-034)**; **D-035 perf pass** shipped (the reported lag was the owner's Chrome GPU state after a
+  driver update — phone and other browser were smooth). Face-filter feature was built, verified,
+  then rolled back by owner decision (3c277c2) — research preserved in FACE-FILTER-RESEARCH.md.
+  Owner-picked backlog recorded in TASKS (Phases 23–29: trash, backup/restore, re-edit strips,
+  dark mode, strip signature, on-this-day, album PDF). 69/69 tests green.
 
 ## Blockers & known limitations
 - **Owner's desktop "covered buttons" report** — root-caused and structurally fixed via the D-027
