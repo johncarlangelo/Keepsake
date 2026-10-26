@@ -250,7 +250,7 @@ export function Segmented({
   onChange,
   label,
 }: {
-  options: Array<{ value: string; label: string }>
+  options: Array<{ value: string; label: ReactNode }>
   value: string
   onChange: (v: string) => void
   label: string

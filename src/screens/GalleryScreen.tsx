@@ -73,7 +73,17 @@ export function GalleryScreen() {
             onChange={(v) => setView(v as 'grid' | 'album')}
             options={[
               { value: 'grid', label: 'Grid' },
-              { value: 'album', label: 'Album' },
+              {
+                value: 'album',
+                label: (
+                  <>
+                    Album
+                    <span className="rounded-full bg-blush px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-rose-ink uppercase">
+                      beta
+                    </span>
+                  </>
+                ),
+              },
             ]}
           />
         </div>
@@ -125,7 +135,8 @@ export function GalleryScreen() {
         <section aria-label="Strip album" className="animate-enter">
           <AlbumBook entries={strips} />
           <p className="muted mt-3 text-center text-xs">
-            tap a page corner or use the arrows to flip · live strips play while their page is open
+            <span className="mr-1.5 rounded-full bg-blush px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-rose-ink uppercase">beta</span>
+            early look — tap a page corner or use the arrows to flip · live strips play while their page is open
           </p>
         </section>
       ) : (
