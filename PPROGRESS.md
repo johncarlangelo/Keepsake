@@ -23,7 +23,8 @@ real-device testing (Tier C).
 - None. All requested features shipped and owner-approved:
   **3D flip album (Phase 22)** — Gallery Grid/Album segment; saved strips and live strips become
   pages of a CSS-3D flipbook (drag/click/keyboard flips, live strips play while open,
-  reduced-motion fallback, zero new dependencies). **Live photo strips + MP4 export (Phase 20,
+  reduced-motion fallback; REBUILT on react-pageflip (StPageFlip, MIT) after the owner found the
+  hand-rolled version flat and clunky — real fold shadows, drag corners, swipe). **Live photo strips + MP4 export (Phase 20,
   D-034)**; **D-035 perf pass** shipped (the reported lag was the owner's Chrome GPU state after a
   driver update — phone and other browser were smooth). Face-filter feature was built, verified,
   then rolled back by owner decision (3c277c2) — research preserved in FACE-FILTER-RESEARCH.md.

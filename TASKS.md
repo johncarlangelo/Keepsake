@@ -146,10 +146,11 @@ composes of the saved strip (still) with flippable pages".
 - [x] **T22.1 Data** — zero new storage: the album is a VIEW over existing records
       (`kind: 'strip'` sorted by date; live strips included). Later: user-created named albums
       with covers.
-- [x] **T22.2 Album view** — Gallery gains a "Grid | Album" segment; a centered book (one strip
-      per page, cover page with title) with a real page-flip: CSS 3D `rotateY` around the spine
-      with `perspective` on the container, backface-hidden page backs, corner-peel affordance on
-      hover. No new dependencies — hand-rolled CSS 3D (matches the D-030 expressive direction).
+- [x] **T22.2 Album view** — Gallery gains a "Grid | Album" segment. AMENDED after owner feedback
+      ("doesn't look 3d at all and feels clunky", asked to research components): rebuilt on
+      **react-pageflip** (StPageFlip, MIT — new runtime dep) for real book geometry: drag-corner
+      folding with soft shadows, swipe, hard covers, click-to-flip. The hand-rolled rotateY was
+      removed (it couldn't produce page thickness or fold shadows).
 - [x] **T22.3 Interactions** — flip via click/drag on the page corner, arrow keys, swipe on
       touch; page-jump control; `prefers-reduced-motion` falls back to simple crossfade paging.
 - [x] **T22.4 Live strips in the album** — a live strip's page plays its clip while the page is
