@@ -120,6 +120,25 @@ Physical photobooths print a still but let you relive the moment; Keepsake shoul
       device (iPhone/Android) capture still to be exercised; clips of selfie sessions match the
       mirrored stills; iOS video export is one-at-a-time via the share sheet.
 
+## Phase 21 — Face-tracking filters (Snap/Instagram-style) — RESEARCHED, NOT STARTED (2026-10-25)
+Owner question: can we add face-tracking filters like Snapchat/Instagram without any API calls?
+Research findings (full write-up in the session, 2026-10-25):
+- **Snap/Instagram use native on-device ML** (ARKit/ARCore face meshes) — not web tech; their web
+  SDKs (Snap Camera Kit, DeepAR, Banuba) all require platform accounts/keys/APIs → charter-violating.
+- **Recommended: MediaPipe Face Landmarker** (`@mediapipe/tasks-vision`, Apache-2.0, Google) —
+  478 landmarks + 52 blendshapes (smile, blink, jaw…), runs fully in-browser via WASM/WebGL/WebGPU,
+  ~15–30 ms/frame desktop. Self-hostable: commit the `.task` model (~3.7 MB) + wasm to the repo and
+  lazy-load only when a face filter is enabled → keeps the **zero external runtime requests**
+  charter intact. Alternative: `@vladmandic/face-api` (68 landmarks, TF.js, heavier, older tech).
+- Filter UX: overlay props anchored to landmarks (sunglasses on eyes, hat on forehead, dog ears),
+  blendshape triggers (sparkles on smile, mask on jaw-open); overlays are BAKED into the capture
+  (drawn on the capture canvas before save) so filters persist in strips/exports like the mirror.
+- Plan: T21.1 bundle assets + lazy loader · T21.2 live-preview overlay loop in the booth ·
+  T21.3 2–3 landmark-anchored props · T21.4 blendshape-triggered effects · T21.5 perf guard
+  (toggle off / reduced-resolution inference on weak devices) · T21.6 device test.
+- Charter checks: no API calls (bundled assets), no uploads (all inference local) — needs a
+  DECISIONS entry for the `@mediapipe/tasks-vision` runtime dependency before implementation.
+
 ## Open follow-ups (not blockers)
 - Tier C device testing (VERIFY C1–C6) when hardware available — required before claiming any
   platform as verified.
