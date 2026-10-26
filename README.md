@@ -30,7 +30,8 @@ npm run dev        # http://localhost:5173 (camera requires a secure context —
   previews), then camera permission explainer → live preview (mirrored front camera) →
   configurable countdown (off/3s/5s), Manual or Continuous shutter (continuous auto-fires every
   shot), sequential shots → review with per-slot retakes. Every successful capture is saved
-  automatically to the in-app Gallery. Camera switch where multiple cameras exist; stream always
+  automatically to the in-app Gallery. Optional **face filters** (see `FILTERS.md`) track your face on-device via MediaPipe and bake
+  into the capture. Camera switch where multiple cameras exist; stream always
   cleaned up (route change, tab hidden, session end).
 - **Gallery** (Keepsake's own, browser-local — not your device's photo library) — thumbnail grid,
   full preview with metadata, multi-select, delete/clear with confirmation, storage meter, and

@@ -512,3 +512,29 @@ aurora, marquee, and chrome render as before. Frame-rate confirmation is the own
 on the live site \u2014 recorded as such, not claimed as measured.
 **Consequences:** blur remains only on modals/sheets (open-state, not scroll-state); reduced-
 motion users were never affected (animations already disabled there).
+
+## D-036 · 2026-10-25 · Face-tracking filters via MediaPipe Face Landmarker (new runtime dependency)
+**Context:** Owner approved the researched plan (TASKS Phase 21): Snap/Instagram-style face
+filters with NO API calls. Their native tech (ARKit/ARCore) isn't web-accessible and commercial
+web SDKs (Snap Camera Kit, DeepAR, Banuba) need platform accounts/keys — charter-violating.
+**Decision:** Adopt **`@mediapipe/tasks-vision` 1.1.1** (Apache-2.0 — the new runtime dependency
+this entry justifies): Face Landmarker with 478 landmarks + 52 blendshapes, running fully
+on-device. Charter compliance: the `face_landmarker.task` model (3.7 MB) and the WASM runtime
+(SIMD + no-SIMD variants) are COMMITTED to `public/mediapipe/` — the site still makes **zero
+external runtime requests**; assets lazy-load only when a filter is picked (dynamic import →
+separate chunk; model fetch deferred until then). Six procedural filters (see FILTERS.md):
+Sunglasses, Heart Eyes, Blush, Party Hat, Doggo (jawOpen blendshape tongue), Smile Sparkles
+(mouthSmile trigger) — all pure draw functions over pixel-space landmarks in
+`src/data/faceFilters.ts`, baked into the capture at shutter time (drawn onto the captureStill
+canvas with the capture's mirror flag, matching what the preview showed). Live preview loop:
+overlay canvas over the video, detection throttled to ~15 Hz (66 ms) with exponential point
+smoothing, GPU delegate with CPU fallback, cover-crop math shared by overlay and bake
+(`coverTransform`, unit-tested). Cost surface: only the booth live view while a filter is active;
+Gallery/Studio/exports untouched; picking "No filter" (or leaving) stops the loop entirely —
+the owner explicitly accepted the perf envelope and framed the whole feature as a single
+rollback-able commit.
+**Alternatives:** `@vladmandic/face-api` (TF.js, 68 landmarks, heavier and less expressive);
+Shape Detection API (flag-gated, inconsistent); commercial web AR SDKs (accounts/keys/paid).
+**Verified:** 71/71 tests (registry integrity, draw smoke on all filters, throttle/smoothing/
+cover math); assets served locally; real-face tracking is the owner's device check (consistent
+with every device gate in this project).
