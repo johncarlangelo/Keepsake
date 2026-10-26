@@ -4,9 +4,6 @@ import { CameraController } from '../lib/camera'
 import { getPhoto, newId, putPhoto, requestPersistence, storageEstimate } from '../lib/db'
 import { makeThumb, pooledUrl } from '../lib/images'
 import { liveClipDurationMs, pickLiveMime, startLiveClip, supportsLiveCapture, type LiveRecording } from '../lib/liveclip'
-import { FACE_FILTERS, getFaceFilter, type FaceFrame } from '../data/faceFilters'
-import { FaceFilterLayer } from '../components/FaceFilterLayer'
-import { canvasToBlob } from '../lib/images'
 import { sounds } from '../lib/sound'
 import { getTemplate } from '../data/templates'
 import { emptyComposition } from '../render/compose'
@@ -42,9 +39,6 @@ export function BoothScreen() {
   const busyRef = useRef(false)
   const retakeRef = useRef<number | null>(null)
   retakeRef.current = retakeOf
-  /** selected face filter for the session (null = off) + latest smoothed face for the bake */
-  const [faceFilterId, setFaceFilterId] = useState<string | null>(null)
-  const faceRef = useRef<FaceFrame | null>(null)
   /** pending auto-capture in continuous mode (cancelled on session end/unmount) */
   const autoTimerRef = useRef<number | null>(null)
   const cancelAuto = () => {
@@ -187,34 +181,7 @@ export function BoothScreen() {
     if (!video || !ctrl || busyRef.current) return
     busyRef.current = true
     try {
-      const mirroredCapture = settings.mirrorSave && ctrl.activeFacing === 'user'
-      const { width, height, canvas } = await ctrl.captureStill(video, mirroredCapture)
-      // face filters bake into the capture like the mirror does — the overlay
-      // keeps the latest smoothed face; drawing matches the canvas' mirror flag
-      const face = faceFilterId ? faceRef.current : null
-      const filter = face ? getFaceFilter(faceFilterId) : null
-      let blob: Blob | null = null
-      if (face && filter) {
-        const ctx = canvas.getContext('2d')
-        if (ctx) {
-          ctx.save()
-          if (mirroredCapture) {
-            ctx.translate(canvas.width, 0)
-            ctx.scale(-1, 1)
-          }
-          filter.draw(
-            ctx,
-            { pts: face.pts.map((p) => ({ x: p.x * width, y: p.y * height })), bs: face.bs },
-            { time: performance.now() }
-          )
-          ctx.restore()
-        }
-        blob = await canvasToBlob(canvas, 'image/jpeg', 0.92)
-        if (!blob) blob = null
-      } else {
-        blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', 0.92))
-      }
-      if (!blob) throw new Error('Capture encoding failed')
+      const { blob, width, height, canvas } = await ctrl.captureStill(video, settings.mirrorSave && ctrl.activeFacing === 'user')
       const thumb = await makeThumb(canvas, 360)
       const id = newId()
       const result = await putPhoto({
@@ -276,7 +243,7 @@ export function BoothScreen() {
     } finally {
       busyRef.current = false
     }
-  }, [faceFilterId, pushShot, replaceShot, settleLiveClip, setPhase, settings.mirrorSave, stopCamera, template.shots])
+  }, [pushShot, replaceShot, settleLiveClip, setPhase, settings.mirrorSave, stopCamera, template.shots])
 
   const runCountdownThenCapture = useCallback(() => {
     if (countdown !== null) return
@@ -368,9 +335,6 @@ export function BoothScreen() {
           templateName={template.name}
           templateShots={template.shots}
           liveEnabled={settings.livePhoto && supportsLiveCapture()}
-          faceFilterId={faceFilterId}
-          onFaceFilterChange={setFaceFilterId}
-          faceRef={faceRef}
           continuous={settings.continuous}
           onToggleContinuous={(v) => update({ continuous: v })}
           onShutter={runCountdownThenCapture}
@@ -561,9 +525,6 @@ function LiveView(props: {
   templateName: string
   templateShots: number
   liveEnabled: boolean
-  faceFilterId: string | null
-  onFaceFilterChange: (id: string | null) => void
-  faceRef: React.MutableRefObject<FaceFrame | null>
   continuous: boolean
   onToggleContinuous: (v: boolean) => void
   onShutter: () => void
@@ -572,14 +533,12 @@ function LiveView(props: {
   onStop: () => void
   onRetry: () => void
 }) {
-  const { videoRef, camState, countdown, flash, shotsTaken, templateName, templateShots, liveEnabled, faceFilterId, onFaceFilterChange, faceRef, continuous, onToggleContinuous, onShutter, onSwitch, canSwitch, onStop, onRetry } = props
+  const { videoRef, camState, countdown, flash, shotsTaken, templateName, templateShots, liveEnabled, continuous, onToggleContinuous, onShutter, onSwitch, canSwitch, onStop, onRetry } = props
   const err = camErrorMessage(camState)
   return (
     <section aria-label="Live camera" className="animate-enter mx-auto max-w-2xl">
       <div className="relative mx-auto aspect-[3/4] max-h-[66dvh] w-full overflow-hidden rounded-md bg-dark-bg shadow-2 ring-1 ring-dark-line/60">
         <video ref={videoRef} playsInline muted autoPlay className="size-full -scale-x-100 object-cover" />
-        {/* face-filter overlay: draws props over the mirrored feed */}
-        <FaceFilterLayer videoRef={videoRef} filterId={faceFilterId} faceRef={faceRef} />
         {/* film-frame corners over the feed */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-3 rounded-sm border border-white/15" />
         {flash ? (
@@ -658,24 +617,6 @@ function LiveView(props: {
         ) : (
           <span className="w-11" />
         )}
-      </div>
-
-      {/* face filters (Phase 21): lazy-load the tracker only when one is picked */}
-      <div className="mt-3 flex justify-center">
-        <div
-          role="group"
-          aria-label="Face filters"
-          className="flex max-w-full gap-2 overflow-x-auto py-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          <Chip active={faceFilterId === null} onClick={() => onFaceFilterChange(null)}>
-            No filter
-          </Chip>
-          {FACE_FILTERS.map((f) => (
-            <Chip key={f.id} active={faceFilterId === f.id} onClick={() => onFaceFilterChange(f.id)} disabled={camState !== 'granted'}>
-              {f.name}
-            </Chip>
-          ))}
-        </div>
       </div>
 
       {/* capture mode: manual shutter presses or continuous auto-fire (D-031) */}

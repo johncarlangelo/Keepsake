@@ -120,7 +120,7 @@ Physical photobooths print a still but let you relive the moment; Keepsake shoul
       device (iPhone/Android) capture still to be exercised; clips of selfie sessions match the
       mirrored stills; iOS video export is one-at-a-time via the share sheet.
 
-## Phase 21 — Face-tracking filters (Snap/Instagram-style) — DONE (2026-10-25, D-036; single rollback-able commit per owner)
+## Phase 21 — Face-tracking filters (Snap/Instagram-style) — RESEARCHED, NOT STARTED (2026-10-25)
 Owner question: can we add face-tracking filters like Snapchat/Instagram without any API calls?
 Research findings (full write-up in the session, 2026-10-25):
 - **Snap/Instagram use native on-device ML** (ARKit/ARCore face meshes) — not web tech; their web
@@ -133,11 +133,9 @@ Research findings (full write-up in the session, 2026-10-25):
 - Filter UX: overlay props anchored to landmarks (sunglasses on eyes, hat on forehead, dog ears),
   blendshape triggers (sparkles on smile, mask on jaw-open); overlays are BAKED into the capture
   (drawn on the capture canvas before save) so filters persist in strips/exports like the mirror.
-- Plan executed in ONE commit (owner wants a single rollback point): T21.1 assets bundled in
-  `public/mediapipe/` + lazy loader ✓ · T21.2 live-preview overlay loop ✓ · T21.3 six filters
-  (see FILTERS.md) ✓ · T21.4 blendshape triggers (Doggo tongue, Smile Sparkles) ✓ · T21.5 perf
-  guard: ~15 Hz throttled inference + point smoothing + GPU/CPU fallback + stops with the session
-  ✓ · T21.6 real-face device check = owner.
+- Plan: T21.1 bundle assets + lazy loader · T21.2 live-preview overlay loop in the booth ·
+  T21.3 2–3 landmark-anchored props · T21.4 blendshape-triggered effects · T21.5 perf guard
+  (toggle off / reduced-resolution inference on weak devices) · T21.6 device test.
 - Charter checks: no API calls (bundled assets), no uploads (all inference local) — needs a
   DECISIONS entry for the `@mediapipe/tasks-vision` runtime dependency before implementation.
 

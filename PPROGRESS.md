@@ -20,12 +20,13 @@ real-device testing (Tier C).
   README with deployment instructions.
 
 ## In progress
-- **Face-tracking filters shipped (Phase 21, D-036)** — MediaPipe Face Landmarker bundled
-  locally (zero external requests), six filters (see FILTERS.md), baked into captures at shutter
-  time, throttled to ~15 Hz in the live preview only. Single commit per the owner's rollback
-  request; real-face device check is the owner's gate. Also closed out: D-035 perf pass shipped
-  (the reported lag was the owner's Chrome GPU state after a driver update — phone + other
-  browser were fine), and the Phase 20 live-photo strips are shipped and owner-approved.
+- **Scroll-performance pass shipped (D-035)** — removed full-page grain blend + chrome
+  backdrop-blur, promoted animated layers, added content-visibility; awaiting the owner's
+  scroll feel-check on the live site. **Live photo strips shipped (Phase 20, D-034, owner-approved)**: ~3s clip per shot when
+  "Live photos" is on; the Studio displays the still strip AND a live strip side by side (same
+  renderer — identical frames); both save to the Gallery; live strips export as MP4
+  (Download video). 65/65 tests green. Still open: iPhone re-test of the D-033 still-export fix
+  and real-device exercise of live capture. Live at https://johncarlangelo.github.io/Keepsake/.
 
 ## Blockers & known limitations
 - **Owner's desktop "covered buttons" report** — root-caused and structurally fixed via the D-027
