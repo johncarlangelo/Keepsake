@@ -158,6 +158,29 @@ composes of the saved strip (still) with flippable pages".
       at 375 and desktop; strips render through the shared StripCanvas (single render path).
       Deferred (later phases): multiple named albums, album PDF export.
 
+## Owner-picked backlog (2026-10-27) — planned phases after Phase 22
+Features 3, 5, 6, 8, 9, 10, 11 from the owner's feature selection (product features; see session
+table). Order of implementation is the owner's call per feature.
+- [ ] **Phase 23 — Trash / recently deleted** — `PhotoRecord.deletedAt?` (additive); deleting
+      moves records to a Trash view (restore + permanent delete); auto-purge after 30 days on
+      gallery load; strengthens the never-silently-delete charter.
+- [ ] **Phase 24 — Backup & restore** — export the whole Gallery (photos + strips, blobs included)
+      as a single local archive file; import restores with progress + conflict handling. No
+      uploads — a file the owner keeps.
+- [ ] **Phase 25 — Re-edit saved strips** — saved strip records gain an optional composition
+      snapshot (additive, same pattern as liveStrip); "Edit again" on a strip reopens the Studio
+      with slots/filters/text intact.
+- [ ] **Phase 26 — Dark mode** — dark theme via Tailwind `dark:` class strategy (dark tokens
+      already exist); toggle in the header, persisted in prefs; canvas renders stay light
+      (keepsakes keep their look).
+- [ ] **Phase 27 — Strip signature** — optional footer signature line on every composed strip
+      (setting, pre-filled "Hermanos"); rendered by the shared compose renderer so preview and
+      export match.
+- [ ] **Phase 28 — On this day** — a memories card in the Gallery resurfacing strips/photos taken
+      on this month+day in earlier years; links into the album view.
+- [ ] **Phase 29 — Album PDF export** — export the flipbook as a paginated PDF via the browser
+      print pipeline (print stylesheet over album pages); pairs with Phase 22.
+
 ## Open follow-ups (not blockers)
 - Tier C device testing (VERIFY C1–C6) when hardware available — required before claiming any
   platform as verified.
