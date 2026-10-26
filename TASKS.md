@@ -139,6 +139,25 @@ Research findings (full write-up in the session, 2026-10-25):
 - Charter checks: no API calls (bundled assets), no uploads (all inference local) — needs a
   DECISIONS entry for the `@mediapipe/tasks-vision` runtime dependency before implementation.
 
+## Phase 22 — 3D flip album — SCOPED (owner idea, 2026-10-27; TODO)
+A third Gallery view: a realistic flipbook album whose PAGES are the saved still strips — the
+photobooth-as-keepsake experience beyond a thumbnail grid. Owner concept: "a 3d photo album that
+composes of the saved strip (still) with flippable pages".
+- [ ] **T22.1 Data** — zero new storage: the album is a VIEW over existing records
+      (`kind: 'strip'` sorted by date; live strips included). Later: user-created named albums
+      with covers.
+- [ ] **T22.2 Album view** — Gallery gains a "Grid | Album" segment; a centered book (one strip
+      per page, cover page with title) with a real page-flip: CSS 3D `rotateY` around the spine
+      with `perspective` on the container, backface-hidden page backs, corner-peel affordance on
+      hover. No new dependencies — hand-rolled CSS 3D (matches the D-030 expressive direction).
+- [ ] **T22.3 Interactions** — flip via click/drag on the page corner, arrow keys, swipe on
+      touch; page-jump control; `prefers-reduced-motion` falls back to simple crossfade paging.
+- [ ] **T22.4 Live strips in the album** — a live strip's page plays its clip while the page is
+      open (same player pattern as the detail modal).
+- [ ] **T22.5 Polish + scope guards** — spine shadow, paper texture, page thickness edge; works
+      at 375 and desktop; strips render through the shared StripCanvas (single render path).
+      Deferred (later phases): multiple named albums, album PDF export.
+
 ## Open follow-ups (not blockers)
 - Tier C device testing (VERIFY C1–C6) when hardware available — required before claiming any
   platform as verified.
