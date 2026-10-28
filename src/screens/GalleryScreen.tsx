@@ -78,8 +78,8 @@ export function GalleryScreen() {
                 label: (
                   <>
                     Album
-                    <span className="rounded-full bg-blush px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-rose-ink uppercase">
-                      beta
+                    <span className="ml-1.5 rounded-full bg-blush px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-rose-ink uppercase">
+                      work in progress
                     </span>
                   </>
                 ),
@@ -135,7 +135,7 @@ export function GalleryScreen() {
         <section aria-label="Strip album" className="animate-enter">
           <AlbumBook entries={strips} />
           <p className="muted mt-3 text-center text-xs">
-            <span className="mr-1.5 rounded-full bg-blush px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-rose-ink uppercase">beta</span>
+            <span className="mr-1.5 rounded-full bg-blush px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-rose-ink uppercase">work in progress</span>
             early look — tap a page corner or use the arrows to flip · live strips play while their page is open
           </p>
         </section>
